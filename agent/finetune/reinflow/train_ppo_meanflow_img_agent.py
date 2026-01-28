@@ -1,0 +1,285 @@
+# MIT License
+
+# Copyright (c) 2025 ReinFlow Authors
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+from tqdm import tqdm as tqdm
+import torch
+import logging
+log = logging.getLogger(__name__)
+from agent.finetune.reinflow.train_ppo_shortcut_img_agent import TrainPPOImgShortCutAgent
+from model.common.modules import RandomShiftsAug
+import numpy as np
+from model.flow.ft_ppo.ppomeanflow import PPOMeanFlow
+from agent.finetune.reinflow.buffer import PPOFlowImgBuffer, PPOFlowImgBufferGPU
+
+class TrainPPOImgMeanFlowAgent(TrainPPOImgShortCutAgent):
+    """
+    Training agent for PPO fine-tuning of MeanFlow policies with image observations.
+    
+    Inherits from TrainPPOImgShortCutAgent and overrides MeanFlow-specific components.
+    The main differences are in the policy network and sampling procedure.
+    """
+    
+    def __init__(self, cfg):
+        super().__init__(cfg)
+        log.info("Initialized MeanFlow PPO training agent with image observations")
+        
+        # MeanFlow uses 5 inference steps by default (as per original paper)
+        # This can be overridden in config
+        self.inference_steps = cfg.model.inference_steps if hasattr(cfg.model, 'inference_steps') else 5
+        
+        # Adjust some parameters for MeanFlow stability
+        self.initial_ratio_error_threshold = 1e-5  # MeanFlow can be more stable
+        
+    def agent_update(self, verbose=True):
+        """
+        Agent update specifically for MeanFlow PPO.
+
+        The main difference from shortcut flow is the underlying sampling and
+        log probability computation, but the PPO loss computation remains the same.
+        """
+        # DEBUG: 打印阶段3信息
+        print(f"\n{'='*60}")
+        print(f"[DEBUG 阶段3: PPO更新] batch_size={self.batch_size}")
+        print(f"[DEBUG] total_steps={self.total_steps}, update_epochs={self.update_epochs}")
+        print(f"[DEBUG] 总批次数: {max(1, self.total_steps // self.batch_size)} 批/epoch")
+        if torch.cuda.is_available():
+            allocated = torch.cuda.memory_allocated() / (1024**3)
+            reserved = torch.cuda.memory_reserved() / (1024**3)
+            print(f"[DEBUG] 阶段3开始前 GPU显存: 已分配={allocated:.2f}GB, 已预留={reserved:.2f}GB")
+        print(f"{'='*60}\n")
+
+        clipfracs_list = []
+        noise_std_list = []
+        actor_norm = 0.0
+        critic_norm = 0.0
+
+        for update_epoch, batch_id, minibatch in self.minibatch_generator() if not self.repeat_samples else self.minibatch_generator_repeat():
+            # Minibatch gradient descent for MeanFlow
+            self.model: PPOMeanFlow
+
+            # DEBUG: 第一个批次打印详细信息
+            if update_epoch == 0 and batch_id == 0:
+                print(f"[DEBUG 阶段3] 第一个批次, minibatch包含:")
+                for i, mb in enumerate(minibatch):
+                    if hasattr(mb, 'shape'):
+                        print(f"  minibatch[{i}]: shape={mb.shape}, dtype={mb.dtype}")
+                if torch.cuda.is_available():
+                    allocated = torch.cuda.memory_allocated() / (1024**3)
+                    print(f"[DEBUG 阶段3] 第一个batch开始前 GPU已分配={allocated:.2f}GB")
+
+            pg_loss, entropy_loss, v_loss, bc_loss, \
+            clipfrac, approx_kl, ratio, \
+            oldlogprob_min, oldlogprob_max, oldlogprob_std, \
+                newlogprob_min, newlogprob_max, newlogprob_std, \
+                noise_std, newQ_values = self.model.loss(*minibatch, 
+                                                    use_bc_loss=self.use_bc_loss, 
+                                                    bc_loss_type=self.bc_loss_type, 
+                                                    normalize_denoising_horizon=self.normalize_denoising_horizon, 
+                                                    normalize_act_space_dimension=self.normalize_act_space_dim,
+                                                    verbose=verbose,
+                                                    clip_intermediate_actions=self.clip_intermediate_actions,
+                                                    account_for_initial_stochasticity=self.account_for_initial_stochasticity)
+            self.approx_kl = approx_kl
+            
+            if verbose:
+                log.info(f"MeanFlow update_epoch={update_epoch}/{self.update_epochs}, batch_id={batch_id}/{max(1, self.total_steps // self.batch_size)}, ratio={ratio:.3f}, clipfrac={clipfrac:.3f}, approx_kl={self.approx_kl:.2e}")
+            
+            # Check for potential bugs in the first update
+            if update_epoch == 0 and batch_id == 0 and np.abs(ratio - 1.00) > self.initial_ratio_error_threshold:
+                log.warning(f"Warning: MeanFlow ratio={ratio} not 1.00 when update_epoch==0 and batch_id==0, there might be bugs in the implementation!")
+            
+            # Adaptive learning rate based on KL divergence
+            if self.target_kl and self.lr_schedule == 'adaptive_kl':
+                self.update_lr_adaptive_kl(self.approx_kl)
+            
+            # Compute total loss
+            loss = pg_loss + entropy_loss * self.ent_coef + v_loss * self.vf_coef + bc_loss * self.bc_coeff
+            
+            clipfracs_list += [clipfrac]
+            noise_std_list += [noise_std]
+            
+            loss.backward()
+            
+            # Gradient accumulation support
+            if (batch_id + 1) % self.grad_accumulate == 0:
+                # Compute gradient norms for monitoring
+                actor_norm = torch.nn.utils.clip_grad_norm_(self.model.actor_ft.parameters(), max_norm=float('inf'))
+                critic_norm = torch.nn.utils.clip_grad_norm_(self.model.critic.parameters(), max_norm=float('inf'))
+                if verbose:
+                    log.info(f"MeanFlow before clipping: actor_norm={actor_norm:.2e}, critic_norm={critic_norm:.2e}")
+                
+                # Update actor after critic warmup
+                if self.itr >= self.n_critic_warmup_itr:
+                    if self.max_grad_norm:
+                        torch.nn.utils.clip_grad_norm_(self.model.actor_ft.parameters(), self.max_grad_norm)
+                    self.actor_optimizer.step()
+                
+                # Update critic
+                if self.max_grad_norm:
+                    torch.nn.utils.clip_grad_norm_(self.model.critic.parameters(), self.max_grad_norm)
+                self.critic_optimizer.step()
+                
+                # Clear gradients
+                self.actor_optimizer.zero_grad()
+                self.critic_optimizer.zero_grad()
+                
+                if verbose:
+                    log.info(f"MeanFlow grad update at batch {batch_id}")
+                    log.info(f"MeanFlow approx_kl: {approx_kl}, update_epoch: {update_epoch}/{self.update_epochs}, num_batch: {self.total_steps // self.batch_size}")
+        
+        # Aggregate statistics
+        clip_fracs = np.mean(clipfracs_list)
+        noise_stds = np.mean(noise_std_list)
+        
+        # Training metrics dictionary
+        self.train_ret_dict = {
+            "loss": loss,
+            "pg loss": pg_loss,
+            "value loss": v_loss,
+            "entropy_loss": entropy_loss,
+            "bc_loss": bc_loss,
+            "approx kl": self.approx_kl,
+            "ratio": ratio,
+            "clipfrac": clip_fracs,
+            "explained variance": self.explained_var,
+            "old_logprob_min": oldlogprob_min,
+            "old_logprob_max": oldlogprob_max,
+            "old_logprob_std": oldlogprob_std,
+            "new_logprob_min": newlogprob_min,
+            "new_logprob_max": newlogprob_max,
+            "new_logprob_std": newlogprob_std,
+            "actor_norm": actor_norm,
+            "critic_norm": critic_norm,
+            "actor lr": self.actor_optimizer.param_groups[0]["lr"],
+            "critic lr": self.critic_optimizer.param_groups[0]["lr"],
+            "min_logprob_noise_std": self.model.min_logprob_denoising_std,
+            "min_sampling_noise_std": self.model.min_sampling_denoising_std,
+            "noise_std": noise_stds,
+            "Q_values": self.Q_values  # Old Q values for consistency with diffusion PPO
+        }
+    
+    def run(self):
+        """
+        Main training loop for MeanFlow PPO fine-tuning.
+
+        This follows the same structure as the parent class but includes
+        MeanFlow-specific logging and monitoring.
+        """
+        log.info("Starting MeanFlow PPO fine-tuning training loop")
+
+        self.init_buffer()
+        self.prepare_run()
+        self.buffer.reset()
+
+        if self.resume:
+            self.resume_training()
+
+        # Main training progress bar
+        train_itr_pbar = tqdm(
+            total=self.n_train_itr,
+            desc="MeanFlow Training Iterations",
+            unit="itr",
+            dynamic_ncols=True,
+            ascii=True,
+            initial=self.itr
+        )
+
+        while self.itr < self.n_train_itr:
+            self.prepare_video_path()
+            self.set_model_mode()
+            self.reset_env(buffer_device=self.buffer_device)
+            self.buffer.update_full_obs()
+
+            # Data collection phase
+            for step in tqdm(range(self.n_steps), desc="Collecting samples", leave=False) if self.verbose else range(self.n_steps):
+                if not self.verbose and step % 100 == 0:
+                    print(f"MeanFlow processed {step} of {self.n_steps}")
+
+                with torch.no_grad():
+                    # Prepare visual and proprioceptive observations
+                    cond = {
+                        key: torch.from_numpy(self.prev_obs_venv[key])
+                        .float()
+                        .to(self.device)
+                        for key in self.obs_dims
+                    }
+
+                    # Sample actions using MeanFlow
+                    action_samples, chains_venv = self.get_samples(
+                        cond=cond,
+                        ret_device=self.buffer_device,
+                        normalize_denoising_horizon=self.normalize_denoising_horizon,
+                        normalize_act_space_dimension=self.normalize_act_space_dim,
+                        clip_intermediate_actions=self.clip_intermediate_actions,
+                        account_for_initial_stochasticity=self.account_for_initial_stochasticity
+                    )
+
+                # Execute actions in environment
+                action_venv = action_samples[:, :self.act_steps]
+                obs_venv, reward_venv, terminated_venv, truncated_venv, info_venv = self.venv.step(action_venv)
+
+                # Store experience in buffer
+                self.buffer.add(step, self.prev_obs_venv, chains_venv, reward_venv, terminated_venv, truncated_venv)
+
+                self.prev_obs_venv = obs_venv
+                self.cnt_train_step += self.n_envs * self.act_steps if not self.eval_mode else 0
+
+            # Episode summary
+            self.buffer.summarize_episode_reward()
+
+            if not self.eval_mode:
+                # Update buffer with final observations and perform training update
+                self.buffer: PPOFlowImgBufferGPU
+                self.buffer.update_img(obs_venv, self.model)
+                self.agent_update(verbose=self.verbose)
+
+            # Logging and checkpointing
+            self.log()
+            self.update_lr()
+            self.update_bc_coeff()  # Update BC loss coefficient (decay schedule)
+            self.adjust_finetune_schedule()  # Update MeanFlow policy scheduler
+            self.save_model()
+
+            # Update main progress bar with key metrics
+            if self.itr % self.log_freq == 0:
+                train_itr_pbar.set_postfix({
+                    'mode': 'Eval' if self.eval_mode else 'Train',
+                    'reward': f'{self.buffer.avg_episode_reward:.2f}',
+                    'success': f'{self.buffer.success_rate*100:.1f}%'
+                })
+            train_itr_pbar.update(1)
+
+            self.itr += 1
+
+            # Early stopping for failed fine-tuning
+            if self.use_early_stop and (self.buffer.success_rate < 0.05 or self.buffer.avg_episode_reward < 2.0):
+                log.error(f"MeanFlow finetuning failed. success_rate={self.buffer.success_rate*100:.2f}% and avg_episode_reward={self.buffer.avg_episode_reward:.2f}")
+                train_itr_pbar.close()
+                exit()
+
+            self.clear_cache()
+            self.inspect_memory()
+
+        # Close progress bar cleanly
+        train_itr_pbar.close()
+        log.info("MeanFlow PPO fine-tuning completed successfully!")
