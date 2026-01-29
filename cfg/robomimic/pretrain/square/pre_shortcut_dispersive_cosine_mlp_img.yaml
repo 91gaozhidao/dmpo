@@ -12,10 +12,10 @@ obs_dim: 9  # proprioception only
 cond_steps: 1
 img_cond_steps: 1
 
-# 用于文件命名的字符串版本
-dispersive_weight_name: "0p5"     # 对应 dispersive_loss_weight: 0.5
-dispersive_temp_name: "0p5"       # 对应 dispersive_temperature: 0.5
-dispersive_type_name: "infcos"    # 对应 dispersive_loss_type: "infonce_cosine"
+# String version for file naming
+dispersive_weight_name: "0p5"     # corresponds to dispersive_loss_weight: 0.5
+dispersive_temp_name: "0p5"       # corresponds to dispersive_temperature: 0.5
+dispersive_type_name: "infcos"    # corresponds to dispersive_loss_type: "infonce_cosine"
 
 # observation shape
 shape_meta:
@@ -46,9 +46,9 @@ device: cuda:1
 test_in_mujoco: false
 max_n_episodes: -1
 wandb:
-  entity: ${oc.env:REINFLOW_WANDB_ENTITY}  # 使用环境变量
-  project: DM1-robomimic-${env}-pretrain  # 明确标识ReinFlow工程
-  run: ${now:%Y-%m-%d}_${now:%H-%M-%S}_${name}_shortcut_dispersive_cosine  # 添加shortcut_dispersive_cosine标识
+  entity: ${oc.env:REINFLOW_WANDB_ENTITY}  # uses environment variable
+  project: DM1-robomimic-${env}-pretrain  # explicitly identifies ReinFlow project
+  run: ${now:%Y-%m-%d}_${now:%H-%M-%S}_${name}_shortcut_dispersive_cosine  # adds shortcut_dispersive_cosine identifier
   offline_mode: false
 
 train:

@@ -42,8 +42,8 @@ device: cuda:1
 
 wandb:
   entity: ${oc.env:REINFLOW_WANDB_ENTITY}
-  project: DM1-robomimic-${env}-pretrain  # 明确标识ReinFlow工程
-  run: ${now:%Y-%m-%d}_${now:%H-%M-%S}_${name}_reflow  # 添加reflow标识
+  project: DM1-robomimic-${env}-pretrain  # explicitly identifies ReinFlow project
+  run: ${now:%Y-%m-%d}_${now:%H-%M-%S}_${name}_reflow  # adds reflow identifier
   offline_mode: false
 
 train:

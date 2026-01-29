@@ -57,15 +57,15 @@ class TrainPPOImgMeanFlowAgent(TrainPPOImgShortCutAgent):
         The main difference from shortcut flow is the underlying sampling and
         log probability computation, but the PPO loss computation remains the same.
         """
-        # DEBUG: 打印阶段3信息
+        # DEBUG: Print stage 3 info
         print(f"\n{'='*60}")
-        print(f"[DEBUG 阶段3: PPO更新] batch_size={self.batch_size}")
+        print(f"[DEBUG Stage 3: PPO Update] batch_size={self.batch_size}")
         print(f"[DEBUG] total_steps={self.total_steps}, update_epochs={self.update_epochs}")
-        print(f"[DEBUG] 总批次数: {max(1, self.total_steps // self.batch_size)} 批/epoch")
+        print(f"[DEBUG] Total batches: {max(1, self.total_steps // self.batch_size)} batches/epoch")
         if torch.cuda.is_available():
             allocated = torch.cuda.memory_allocated() / (1024**3)
             reserved = torch.cuda.memory_reserved() / (1024**3)
-            print(f"[DEBUG] 阶段3开始前 GPU显存: 已分配={allocated:.2f}GB, 已预留={reserved:.2f}GB")
+            print(f"[DEBUG] Before stage 3 GPU memory: allocated={allocated:.2f}GB, reserved={reserved:.2f}GB")
         print(f"{'='*60}\n")
 
         clipfracs_list = []
@@ -77,15 +77,15 @@ class TrainPPOImgMeanFlowAgent(TrainPPOImgShortCutAgent):
             # Minibatch gradient descent for MeanFlow
             self.model: PPOMeanFlow
 
-            # DEBUG: 第一个批次打印详细信息
+            # DEBUG: Print detailed info for first batch
             if update_epoch == 0 and batch_id == 0:
-                print(f"[DEBUG 阶段3] 第一个批次, minibatch包含:")
+                print(f"[DEBUG Stage 3] First batch, minibatch contains:")
                 for i, mb in enumerate(minibatch):
                     if hasattr(mb, 'shape'):
                         print(f"  minibatch[{i}]: shape={mb.shape}, dtype={mb.dtype}")
                 if torch.cuda.is_available():
                     allocated = torch.cuda.memory_allocated() / (1024**3)
-                    print(f"[DEBUG 阶段3] 第一个batch开始前 GPU已分配={allocated:.2f}GB")
+                    print(f"[DEBUG Stage 3] Before first batch GPU allocated={allocated:.2f}GB")
 
             pg_loss, entropy_loss, v_loss, bc_loss, \
             clipfrac, approx_kl, ratio, \

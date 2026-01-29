@@ -1340,32 +1340,32 @@ class PPOFlowImgBufferGPU(PPOFlowBufferGPU):
         '''bug fix'''
         if self.aug:
             rgb = self.obs_trajs["rgb"].flatten(0,2) # (s x e x t, C, H, W)
-            # DEBUG: 打印增强前的信息
+            # DEBUG: Print info before augmentation
             rgb_size_gb = rgb.numel() * rgb.element_size() / (1024**3)
             print(f"\n{'='*60}")
-            print(f"[DEBUG 阶段1: 图像增强] n_envs={self.n_envs}, n_steps={self.n_steps}")
-            print(f"[DEBUG] RGB tensor shape: {rgb.shape}, 大小: {rgb_size_gb:.2f} GB")
+            print(f"[DEBUG Stage 1: Image Augmentation] n_envs={self.n_envs}, n_steps={self.n_steps}")
+            print(f"[DEBUG] RGB tensor shape: {rgb.shape}, size: {rgb_size_gb:.2f} GB")
             if torch.cuda.is_available():
                 allocated = torch.cuda.memory_allocated() / (1024**3)
                 reserved = torch.cuda.memory_reserved() / (1024**3)
-                print(f"[DEBUG] 增强前 GPU显存: 已分配={allocated:.2f}GB, 已预留={reserved:.2f}GB")
-            print(f"[DEBUG] 正在执行 self.aug(rgb)... 这是全buffer操作，与batch_size无关!")
+                print(f"[DEBUG] Before augmentation GPU memory: allocated={allocated:.2f}GB, reserved={reserved:.2f}GB")
+            print(f"[DEBUG] Executing self.aug(rgb)... This is a full buffer operation, independent of batch_size!")
             rgb = self.aug(rgb)
             if torch.cuda.is_available():
                 allocated = torch.cuda.memory_allocated() / (1024**3)
                 reserved = torch.cuda.memory_reserved() / (1024**3)
-                print(f"[DEBUG] 增强后 GPU显存: 已分配={allocated:.2f}GB, 已预留={reserved:.2f}GB")
+                print(f"[DEBUG] After augmentation GPU memory: allocated={allocated:.2f}GB, reserved={reserved:.2f}GB")
             print(f"{'='*60}\n")
             self.obs_trajs["rgb"]=rgb.reshape(self.n_steps, self.n_envs, self.n_cond_step, *self.obs_dim['rgb'])
         
         # bugfix: compute values and (old)logprobs
         print(f"\n{'='*60}")
-        print(f"[DEBUG 阶段2: 逐步计算 value 和 logprob] 共 {self.n_steps} 步")
-        print(f"[DEBUG] 每步处理 n_envs={self.n_envs} 个环境的数据")
+        print(f"[DEBUG Stage 2: Step-by-step value and logprob computation] Total {self.n_steps} steps")
+        print(f"[DEBUG] Processing n_envs={self.n_envs} environments per step")
         if torch.cuda.is_available():
             allocated = torch.cuda.memory_allocated() / (1024**3)
             reserved = torch.cuda.memory_reserved() / (1024**3)
-            print(f"[DEBUG] 阶段2开始前 GPU显存: 已分配={allocated:.2f}GB, 已预留={reserved:.2f}GB")
+            print(f"[DEBUG] Before stage 2 GPU memory: allocated={allocated:.2f}GB, reserved={reserved:.2f}GB")
         print(f"{'='*60}\n")
 
         for step in range(self.n_steps):
@@ -1385,17 +1385,17 @@ class PPOFlowImgBufferGPU(PPOFlowBufferGPU):
                                                            **self.log_prob_cfg_dict
                                                            )# GPU version
 
-            # DEBUG: 每100步打印一次进度
+            # DEBUG: Print progress every 100 steps
             if step % 100 == 0:
                 if torch.cuda.is_available():
                     allocated = torch.cuda.memory_allocated() / (1024**3)
-                    print(f"[DEBUG 阶段2] step={step}/{self.n_steps}, GPU已分配={allocated:.2f}GB")
+                    print(f"[DEBUG Stage 2] step={step}/{self.n_steps}, GPU allocated={allocated:.2f}GB")
 
-        print(f"\n[DEBUG 阶段2完成] 所有 {self.n_steps} 步处理完毕")
+        print(f"\n[DEBUG Stage 2 completed] All {self.n_steps} steps processed")
         if torch.cuda.is_available():
             allocated = torch.cuda.memory_allocated() / (1024**3)
             reserved = torch.cuda.memory_reserved() / (1024**3)
-            print(f"[DEBUG] 阶段2完成后 GPU显存: 已分配={allocated:.2f}GB, 已预留={reserved:.2f}GB\n")
+            print(f"[DEBUG] After stage 2 GPU memory: allocated={allocated:.2f}GB, reserved={reserved:.2f}GB\n")
     # bugfix: overload
     @torch.no_grad()
     def update_adv_returns(self, obs_venv, critic:ViTCritic):

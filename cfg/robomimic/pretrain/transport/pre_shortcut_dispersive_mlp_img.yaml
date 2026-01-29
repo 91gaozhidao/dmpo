@@ -12,10 +12,10 @@ obs_dim: 18  # proprioception only, two robots
 cond_steps: 1
 img_cond_steps: 1
 
-# 用于文件命名的字符串版本
-dispersive_weight_name: "0p5"     # 对应 dispersive_loss_weight: 0.5
-dispersive_temp_name: "0p5"       # 对应 dispersive_temperature: 0.5
-dispersive_type_name: "infnce"    # 对应 dispersive_loss_type: "infonce_l2"
+# String version for file naming
+dispersive_weight_name: "0p5"     # corresponds to dispersive_loss_weight: 0.5
+dispersive_temp_name: "0p5"       # corresponds to dispersive_temperature: 0.5
+dispersive_type_name: "infnce"    # corresponds to dispersive_loss_type: "infonce_l2"
 
 # observation shape
 shape_meta:

@@ -44,9 +44,9 @@ device: cuda:0
 test_in_mujoco: false
 max_n_episodes: -1
 wandb:
-  entity: ${oc.env:REINFLOW_WANDB_ENTITY}  # 使用环境变量
-  project: DM1-robomimic-${env}-pretrain  # 明确标识ReinFlow工程
-  run: ${now:%Y-%m-%d}_${now:%H-%M-%S}_${name}_meanflow  # 在run名后添加meanflow标识
+  entity: ${oc.env:REINFLOW_WANDB_ENTITY}  # uses environment variable
+  project: DM1-robomimic-${env}-pretrain  # explicitly identifies ReinFlow project
+  run: ${now:%Y-%m-%d}_${now:%H-%M-%S}_${name}_meanflow  # adds meanflow identifier to run name
   offline_mode: false
 
 train:

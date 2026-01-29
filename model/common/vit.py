@@ -138,9 +138,9 @@ class MultiHeadAttention(nn.Module):
         q, k, v = einops.rearrange(
             qkv, "b t (k h d) -> b k h t d", k=3, h=self.num_head
         ).unbind(1)
-        # 兼容性修复：检查是否支持scaled_dot_product_attention
+        # Compatibility fix: check if scaled_dot_product_attention is supported
         if hasattr(torch.nn.functional, 'scaled_dot_product_attention'):
-            # 新版本PyTorch，使用优化的注意力
+            # Newer PyTorch version, use optimized attention
             if hasattr(torch.backends.cuda, 'sdp_kernel'):
                 with torch.backends.cuda.sdp_kernel(enable_math=False):
                     attn_v = torch.nn.functional.scaled_dot_product_attention(
@@ -151,7 +151,7 @@ class MultiHeadAttention(nn.Module):
                     q, k, v, dropout_p=0.0, attn_mask=attn_mask
                 )
         else:
-            # 旧版本PyTorch，手动实现注意力机制
+            # Older PyTorch version, manually implement attention mechanism
             d_k = q.size(-1)
             # q: (b, h, t, d), k: (b, h, t, d), v: (b, h, t, d)
             attn_scores = torch.matmul(q, k.transpose(-2, -1)) / (d_k ** 0.5)
