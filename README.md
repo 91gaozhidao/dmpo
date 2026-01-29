@@ -3,16 +3,16 @@
 <div align="center">
 
 [![Project Page](https://img.shields.io/badge/Project_Page-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://guowei-zou.github.io/dmpo-page/)
-[![Paper](https://img.shields.io/badge/Paper-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white)](http://arxiv.org/abs/2601.20701)
-[![Code](https://img.shields.io/badge/Code-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Guowei-Zou/dmpo-release)
-[![Demo](https://img.shields.io/badge/Demo-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=_vB_mchoux8)
+[![arXiv](https://img.shields.io/badge/arXiv-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white)](http://arxiv.org/abs/2601.20701)
+[![Youtube](https://img.shields.io/badge/Youtube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=_vB_mchoux8)
 [![Bilibili](https://img.shields.io/badge/Bilibili-00A1D6?style=for-the-badge&logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV133zXBPEdb/?share_source=copy_web&vd_source=af323cc810d69452bd73799b93e838d6)
 
 > **One Step Is Enough: Dispersive MeanFlow Policy Optimization**
 > A unified framework enabling true one-step generation for real-time robotic control via MeanFlow, dispersive regularization, and RL fine-tuning.
 
-**Authors:** Anonymous
-**Affiliation:** Anonymous
+[Guowei Zou](https://guowei-zou.github.io/Guowei-Zou/), Haitao Wang, [Hejun Wu](https://cse.sysu.edu.cn/teacher/WuHejun), Yukun Qian, [Yuhang Wang](https://hanlanqian.github.io/about/?lang=en), [Weibing Li](https://cse.sysu.edu.cn/teacher/LiWeibing)
+<br>
+Sun Yat-sen University
 
 </div>
 
@@ -241,10 +241,14 @@ dmpo-release/
 If you find this work useful, please cite:
 
 ```bibtex
-@article{dmpo2025,
-  title={One Step Is Enough: Dispersive MeanFlow Policy Optimization},
-  author={Anonymous},
-  year={2025}
+@misc{zou2026stepenoughdispersivemeanflow,
+      title={One Step Is Enough: Dispersive MeanFlow Policy Optimization}, 
+      author={Guowei Zou and Haitao Wang and Hejun Wu and Yukun Qian and Yuhang Wang and Weibing Li},
+      year={2026},
+      eprint={2601.20701},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2601.20701}, 
 }
 ```
 
@@ -272,4 +276,4 @@ Released under the MIT License. See [LICENSE](LICENSE) for details.
 ## Contact
 
 - Submit issues: [GitHub Issues](<DMPO_ISSUES_URL>)
-- Email: anonymous
+- Email: zougw3@mail2.sysu.edu.cn (Guowei Zou)
