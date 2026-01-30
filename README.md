@@ -88,7 +88,32 @@ source script/set_path.sh  # defines DATA_ROOT, LOG_ROOT, WANDB_ENTITY
 
 - **Demonstration datasets:** Downloaded automatically to `DATA_ROOT` when launching pre-training.
 - **Pretrained checkpoints:** [Hugging Face](https://huggingface.co/Guowei-Zou/DMPO-checkpoints)
-  Contains DMPO pretraining and finetuned weights; sync into `LOG_ROOT` for evaluation scripts.
+  Contains DMPO pretraining and finetuned weights.
+
+### Auto-download from Hugging Face
+
+DMPO supports automatic checkpoint download from Hugging Face. Use the `hf://` prefix in your config:
+
+```yaml
+# In your config file (e.g., cfg/gym/finetune/hopper-v2/ft_ppo_meanflow_mlp.yaml)
+base_policy_path: hf://pretrained_checkpoints/DMPO_pretrained_gym_checkpoints/gym_improved_meanflow_dispersive/hopper-medium-v2_best.pt
+```
+
+Available checkpoints in the HF repository:
+```
+pretrained_checkpoints/
+├── DMPO_pretrained_gym_checkpoints/
+│   ├── gym_improved_meanflow/          # MeanFlow without dispersive loss
+│   └── gym_improved_meanflow_dispersive/  # MeanFlow with dispersive loss (recommended)
+└── DMPO_pretraining_robomimic_checkpoints/
+    ├── w_0p1/  # dispersive weight=0.1
+    ├── w_0p5/  # dispersive weight=0.5 (recommended)
+    └── w_0p9/  # dispersive weight=0.9
+
+finetuned_checkpoints/
+├── gym_meanflow/        # Fine-tuned gym checkpoints
+└── robomimic_meanflow/  # Fine-tuned robomimic checkpoints
+```
 
 To use custom data, place trajectories under your data directory and update the corresponding YAML in `cfg/<ENV_GROUP>/pretrain/<TASK>.yaml`.
 

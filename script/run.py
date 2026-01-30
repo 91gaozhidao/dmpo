@@ -49,6 +49,7 @@ from script.download_url import (
     get_normalization_download_url,
     get_checkpoint_download_url,
 )
+from util.hf_download import is_hf_path, resolve_checkpoint_path
 # allows arbitrary python code execution in configs using the ${eval:''} resolver
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 OmegaConf.register_new_resolver("round_up", math.ceil)
@@ -117,16 +118,22 @@ def main(cfg: OmegaConf):
 
     # For fine-tuning: download checkpoint if needed
     # ReinFlow Authors: specify base_policy_path=null when you wanna resume from an existing fine-tuning checkpoint.
-    if "base_policy_path" in cfg and cfg.base_policy_path and (not os.path.exists(cfg.base_policy_path)):
-        download_url = get_checkpoint_download_url(cfg)
-        if download_url is None:
-            raise ValueError(f"Unknown checkpoint path {cfg.base_policy_path}. Did you specify the correct path to the policy you trained?")
-        download_target = cfg.base_policy_path
-        dir_name = os.path.dirname(download_target)
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-        log.info(f"Downloading checkpoint from {download_url} to {download_target}")
-        gdown.download(url=download_url, output=download_target, fuzzy=True)
+    # DMPO Authors: support hf:// prefix for Hugging Face downloads
+    if "base_policy_path" in cfg and cfg.base_policy_path:
+        if is_hf_path(cfg.base_policy_path):
+            # Download from Hugging Face Hub
+            cfg.base_policy_path = resolve_checkpoint_path(cfg.base_policy_path)
+        elif not os.path.exists(cfg.base_policy_path):
+            # Fallback to Google Drive download (legacy support)
+            download_url = get_checkpoint_download_url(cfg)
+            if download_url is None:
+                raise ValueError(f"Unknown checkpoint path {cfg.base_policy_path}. Did you specify the correct path to the policy you trained?")
+            download_target = cfg.base_policy_path
+            dir_name = os.path.dirname(download_target)
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name)
+            log.info(f"Downloading checkpoint from {download_url} to {download_target}")
+            gdown.download(url=download_url, output=download_target, fuzzy=True)
 
     # Deal with isaacgym needs to be imported before torch
     if "env" in cfg and "env_type" in cfg.env and cfg.env.env_type == "furniture":
