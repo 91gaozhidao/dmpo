@@ -87,10 +87,8 @@ source script/set_path.sh  # defines DATA_ROOT, LOG_ROOT, WANDB_ENTITY
 ## Datasets & Checkpoints
 
 - **Demonstration datasets:** Downloaded automatically to `DATA_ROOT` when launching pre-training.
-- **Pretrained checkpoints:** [Google Drive](<DMPO_CHECKPOINT_URL>)
-  Contains DMPO pretraining weights; sync into `LOG_ROOT` for evaluation scripts.
-- **Evaluation statistics:** [Google Drive](<DMPO_EVAL_STATS_URL>)
-  Contains aggregated `.npz` metrics corresponding to the checkpoints above.
+- **Pretrained checkpoints:** [Hugging Face](https://huggingface.co/Guowei-Zou/DMPO-checkpoints)
+  Contains DMPO pretraining and finetuned weights; sync into `LOG_ROOT` for evaluation scripts.
 
 To use custom data, place trajectories under your data directory and update the corresponding YAML in `cfg/<ENV_GROUP>/pretrain/<TASK>.yaml`.
 
