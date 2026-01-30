@@ -49,7 +49,7 @@ from script.download_url import (
     get_normalization_download_url,
     get_checkpoint_download_url,
 )
-from util.hf_download import is_hf_path, resolve_checkpoint_path
+from util.hf_download import is_hf_path, resolve_checkpoint_path, resolve_dataset_path
 # allows arbitrary python code execution in configs using the ${eval:''} resolver
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 OmegaConf.register_new_resolver("round_up", math.ceil)
@@ -100,21 +100,33 @@ def main(cfg: OmegaConf):
         log.info("No EGL device specified in cfg, falling back to osmesa.")
 
     # For pre-training: download dataset if needed
-    if "train_dataset_path" in cfg and not os.path.exists(cfg.train_dataset_path):
-        download_url = get_dataset_download_url(cfg)
-        download_target = os.path.dirname(cfg.train_dataset_path)
-        log.info(f"Downloading dataset from {download_url} to {download_target}")
-        gdown.download_folder(url=download_url, output=download_target)
+    # DMPO Authors: support hf:// prefix for Hugging Face downloads
+    if "train_dataset_path" in cfg and cfg.train_dataset_path:
+        if is_hf_path(cfg.train_dataset_path):
+            # Download from Hugging Face Hub
+            cfg.train_dataset_path = resolve_dataset_path(cfg.train_dataset_path)
+        elif not os.path.exists(cfg.train_dataset_path):
+            # Fallback to Google Drive download (legacy support)
+            download_url = get_dataset_download_url(cfg)
+            download_target = os.path.dirname(cfg.train_dataset_path)
+            log.info(f"Downloading dataset from {download_url} to {download_target}")
+            gdown.download_folder(url=download_url, output=download_target)
 
-    # For fine-tuning: download normalization if needed
-    if "normalization_path" in cfg and not os.path.exists(cfg.normalization_path):
-        download_url = get_normalization_download_url(cfg)
-        download_target = cfg.normalization_path
-        dir_name = os.path.dirname(download_target)
-        if not os.path.exists(dir_name):
-            os.makedirs(dir_name)
-        log.info(f"Downloading normalization statistics from {download_url} to {download_target}")
-        gdown.download(url=download_url, output=download_target, fuzzy=True)
+    # For fine-tuning/pre-training: download normalization if needed
+    # DMPO Authors: support hf:// prefix for Hugging Face downloads
+    if "normalization_path" in cfg and cfg.normalization_path:
+        if is_hf_path(cfg.normalization_path):
+            # Download from Hugging Face Hub
+            cfg.normalization_path = resolve_dataset_path(cfg.normalization_path)
+        elif not os.path.exists(cfg.normalization_path):
+            # Fallback to Google Drive download (legacy support)
+            download_url = get_normalization_download_url(cfg)
+            download_target = cfg.normalization_path
+            dir_name = os.path.dirname(download_target)
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name)
+            log.info(f"Downloading normalization statistics from {download_url} to {download_target}")
+            gdown.download(url=download_url, output=download_target, fuzzy=True)
 
     # For fine-tuning: download checkpoint if needed
     # ReinFlow Authors: specify base_policy_path=null when you wanna resume from an existing fine-tuning checkpoint.

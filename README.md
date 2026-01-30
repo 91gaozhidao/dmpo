@@ -86,20 +86,47 @@ source script/set_path.sh  # defines DATA_ROOT, LOG_ROOT, WANDB_ENTITY
 
 ## Datasets & Checkpoints
 
-- **Demonstration datasets:** Downloaded automatically to `DATA_ROOT` when launching pre-training.
+- **Demonstration datasets:** [Hugging Face](https://huggingface.co/datasets/Guowei-Zou/DMPO-datasets)
+  Contains pre-processed demonstration data for gym and robomimic tasks.
 - **Pretrained checkpoints:** [Hugging Face](https://huggingface.co/Guowei-Zou/DMPO-checkpoints)
   Contains DMPO pretraining and finetuned weights.
 
 ### Auto-download from Hugging Face
 
-DMPO supports automatic checkpoint download from Hugging Face. Use the `hf://` prefix in your config:
+DMPO supports automatic download from Hugging Face. Use the `hf://` prefix in your config files:
 
+**For datasets (pre-training):**
+```yaml
+# In your config file (e.g., cfg/gym/pretrain/hopper-medium-v2/pre_meanflow_dispersive_mlp.yaml)
+train_dataset_path: hf://gym/hopper-medium-v2/train.npz
+normalization_path: hf://gym/hopper-medium-v2/normalization.npz
+```
+
+**For checkpoints (fine-tuning):**
 ```yaml
 # In your config file (e.g., cfg/gym/finetune/hopper-v2/ft_ppo_meanflow_mlp.yaml)
 base_policy_path: hf://pretrained_checkpoints/DMPO_pretrained_gym_checkpoints/gym_improved_meanflow_dispersive/hopper-medium-v2_best.pt
 ```
 
-Available checkpoints in the HF repository:
+Available datasets in the HF repository ([DMPO-datasets](https://huggingface.co/datasets/Guowei-Zou/DMPO-datasets)):
+```
+gym/
+├── hopper-medium-v2/
+├── walker2d-medium-v2/
+├── ant-medium-expert-v2/
+├── Humanoid-medium-v3/
+├── kitchen-complete-v0/
+├── kitchen-mixed-v0/
+└── kitchen-partial-v0/
+
+robomimic/
+├── lift-img/
+├── can-img/
+├── square-img/
+└── transport-img/
+```
+
+Available checkpoints in the HF repository ([DMPO-checkpoints](https://huggingface.co/Guowei-Zou/DMPO-checkpoints)):
 ```
 pretrained_checkpoints/
 ├── DMPO_pretrained_gym_checkpoints/
