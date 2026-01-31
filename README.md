@@ -327,3 +327,13 @@ Released under the MIT License. See [LICENSE](LICENSE) for details.
 
 - Submit issues: [GitHub Issues](<DMPO_ISSUES_URL>)
 - Email: zougw3@mail2.sysu.edu.cn (Guowei Zou)
+
+---
+
+## Star History
+
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=guowei-zou/dmpo-release&type=Date)](https://star-history.com/#guowei-zou/dmpo-release&Date)
+
+</div>
