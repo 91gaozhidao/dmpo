@@ -104,7 +104,11 @@ def main(cfg: OmegaConf):
     if "train_dataset_path" in cfg and cfg.train_dataset_path:
         if is_hf_path(cfg.train_dataset_path):
             # Download from Hugging Face Hub
-            cfg.train_dataset_path = resolve_dataset_path(cfg.train_dataset_path)
+            local_path = resolve_dataset_path(cfg.train_dataset_path)
+            cfg.train_dataset_path = local_path
+            # Also update train_dataset.dataset_path if it exists (for hydra instantiate)
+            if "train_dataset" in cfg and "dataset_path" in cfg.train_dataset:
+                cfg.train_dataset.dataset_path = local_path
         elif not os.path.exists(cfg.train_dataset_path):
             # Fallback to Google Drive download (legacy support)
             download_url = get_dataset_download_url(cfg)
@@ -117,7 +121,14 @@ def main(cfg: OmegaConf):
     if "normalization_path" in cfg and cfg.normalization_path:
         if is_hf_path(cfg.normalization_path):
             # Download from Hugging Face Hub
-            cfg.normalization_path = resolve_dataset_path(cfg.normalization_path)
+            local_path = resolve_dataset_path(cfg.normalization_path)
+            cfg.normalization_path = local_path
+            # Also update env.wrappers if normalization_path is used there
+            if "env" in cfg and "wrappers" in cfg.env:
+                for wrapper_name, wrapper_cfg in cfg.env.wrappers.items():
+                    if wrapper_cfg and "normalization_path" in wrapper_cfg:
+                        if is_hf_path(wrapper_cfg.normalization_path):
+                            wrapper_cfg.normalization_path = local_path
         elif not os.path.exists(cfg.normalization_path):
             # Fallback to Google Drive download (legacy support)
             download_url = get_normalization_download_url(cfg)
@@ -134,7 +145,11 @@ def main(cfg: OmegaConf):
     if "base_policy_path" in cfg and cfg.base_policy_path:
         if is_hf_path(cfg.base_policy_path):
             # Download from Hugging Face Hub
-            cfg.base_policy_path = resolve_checkpoint_path(cfg.base_policy_path)
+            local_path = resolve_checkpoint_path(cfg.base_policy_path)
+            cfg.base_policy_path = local_path
+            # Also update model.actor_policy_path if it exists (for hydra instantiate)
+            if "model" in cfg and "actor_policy_path" in cfg.model:
+                cfg.model.actor_policy_path = local_path
         elif not os.path.exists(cfg.base_policy_path):
             # Fallback to Google Drive download (legacy support)
             download_url = get_checkpoint_download_url(cfg)

@@ -165,6 +165,9 @@ class EvalAgent:
                 for key, value in data["model"].items():
                     if key.startswith('actor_ft.mlp_logvar') or key.startswith('actor_ft.logvar') or key.startswith('actor_ft.explore_noise_net.'):
                         continue
+                    # Skip exploration-related parameters from finetuned models
+                    if 'time_embedding_explore' in key:
+                        continue
                     if key.startswith('actor_ft.policy.'):
                         actor_policy_state_dict[key.replace('actor_ft.policy.', 'network.')] = value
                     elif key.startswith('actor_ft.'):

@@ -88,7 +88,7 @@ model:
     visual_feature_dim: 128
     dropout: 0.1
     num_img: 1
-    augment: true
+    augment: false
   device: ${device}
   horizon_steps: ${horizon_steps}
   action_dim: ${action_dim}

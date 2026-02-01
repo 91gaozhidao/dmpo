@@ -95,14 +95,14 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
+# Environments (virtual environments)
 .env
 .venv
-env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+# Note: project's env/ directory is tracked (contains gym_utils code)
 
 # Spyder project settings
 .spyderproject
@@ -160,3 +160,4 @@ temp/
 # OS
 .DS_Store
 Thumbs.db
+datasets/

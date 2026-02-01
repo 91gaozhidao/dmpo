@@ -4,6 +4,8 @@
 
 [![Project Page](https://img.shields.io/badge/Project_Page-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://guowei-zou.github.io/dmpo-page/)
 [![arXiv](https://img.shields.io/badge/arXiv-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white)](http://arxiv.org/abs/2601.20701)
+[![Datasets](https://img.shields.io/badge/Datasets-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/datasets/Guowei-Zou/DMPO-datasets)
+[![Checkpoints](https://img.shields.io/badge/Checkpoints-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/Guowei-Zou/DMPO-checkpoints)
 [![Youtube](https://img.shields.io/badge/Youtube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=_vB_mchoux8)
 [![Bilibili](https://img.shields.io/badge/Bilibili-00A1D6?style=for-the-badge&logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV133zXBPEdb/?share_source=copy_web&vd_source=af323cc810d69452bd73799b93e838d6)
 
@@ -53,7 +55,7 @@ Sun Yat-sen University
 ### 1. Clone & Environment Setup
 
 ```bash
-git clone <DMPO_RELEASE_REPO_URL>
+git clone https://github.com/Guowei-Zou/dmpo-release.git
 cd dmpo-release
 conda create -n dmpo python=3.10 -y
 conda activate dmpo
@@ -86,60 +88,39 @@ source script/set_path.sh  # defines DATA_ROOT, LOG_ROOT, WANDB_ENTITY
 
 ## Datasets & Checkpoints
 
-- **Demonstration datasets:** [Hugging Face](https://huggingface.co/datasets/Guowei-Zou/DMPO-datasets)
-  Contains pre-processed demonstration data for gym and robomimic tasks.
+- **Demonstration datasets:** Downloaded automatically from Google Drive when launching pre-training. Also available on [Hugging Face](https://huggingface.co/datasets/Guowei-Zou/DMPO-datasets).
 - **Pretrained checkpoints:** [Hugging Face](https://huggingface.co/Guowei-Zou/DMPO-checkpoints)
-  Contains DMPO pretraining and finetuned weights.
 
-### Auto-download from Hugging Face
+### Pretrained Checkpoint Structure
 
-DMPO supports automatic download from Hugging Face. Use the `hf://` prefix in your config files:
-
-**For datasets (pre-training):**
-```yaml
-# In your config file (e.g., cfg/gym/pretrain/hopper-medium-v2/pre_meanflow_dispersive_mlp.yaml)
-train_dataset_path: hf://gym/hopper-medium-v2/train.npz
-normalization_path: hf://gym/hopper-medium-v2/normalization.npz
-```
-
-**For checkpoints (fine-tuning):**
-```yaml
-# In your config file (e.g., cfg/gym/finetune/hopper-v2/ft_ppo_meanflow_mlp.yaml)
-base_policy_path: hf://pretrained_checkpoints/DMPO_pretrained_gym_checkpoints/gym_improved_meanflow_dispersive/hopper-medium-v2_best.pt
-```
-
-Available datasets in the HF repository ([DMPO-datasets](https://huggingface.co/datasets/Guowei-Zou/DMPO-datasets)):
-```
-gym/
-├── hopper-medium-v2/
-├── walker2d-medium-v2/
-├── ant-medium-expert-v2/
-├── Humanoid-medium-v3/
-├── kitchen-complete-v0/
-├── kitchen-mixed-v0/
-└── kitchen-partial-v0/
-
-robomimic/
-├── lift-img/
-├── can-img/
-├── square-img/
-└── transport-img/
-```
-
-Available checkpoints in the HF repository ([DMPO-checkpoints](https://huggingface.co/Guowei-Zou/DMPO-checkpoints)):
 ```
 pretrained_checkpoints/
 ├── DMPO_pretrained_gym_checkpoints/
-│   ├── gym_improved_meanflow/          # MeanFlow without dispersive loss
+│   ├── gym_improved_meanflow/           # MeanFlow without dispersive loss
+│   │   └── {task}_best.pt               # hopper, walker2d, ant, Humanoid, kitchen-*
 │   └── gym_improved_meanflow_dispersive/  # MeanFlow with dispersive loss (recommended)
+│       └── {task}_best.pt
 └── DMPO_pretraining_robomimic_checkpoints/
-    ├── w_0p1/  # dispersive weight=0.1
-    ├── w_0p5/  # dispersive weight=0.5 (recommended)
-    └── w_0p9/  # dispersive weight=0.9
+    ├── w_0p1/                           # dispersive weight = 0.1
+    ├── w_0p5/                           # dispersive weight = 0.5 (recommended)
+    └── w_0p9/                           # dispersive weight = 0.9
+        └── {task}/                      # lift, can, square, transport
+            ├── {task}_w*_08_meanflow_dispersive.pt  # DMPO (recommended)
+            ├── {task}_w*_02_meanflow_baseline.pt    # MeanFlow baseline
+            ├── {task}_w*_03_reflow_baseline.pt      # Reflow baseline
+            └── {task}_w*_01_shortcut_flow_baseline.pt
+```
 
-finetuned_checkpoints/
-├── gym_meanflow/        # Fine-tuned gym checkpoints
-└── robomimic_meanflow/  # Fine-tuned robomimic checkpoints
+### Download from Hugging Face
+
+Use the `hf://` prefix in config files to auto-download from Hugging Face:
+
+```yaml
+# Gym tasks (fine-tuning)
+base_policy_path: hf://pretrained_checkpoints/DMPO_pretrained_gym_checkpoints/gym_improved_meanflow_dispersive/hopper-medium-v2_best.pt
+
+# Robomimic tasks (fine-tuning)
+base_policy_path: hf://pretrained_checkpoints/DMPO_pretraining_robomimic_checkpoints/w_0p5/can/can_w0p5_08_meanflow_dispersive.pt
 ```
 
 To use custom data, place trajectories under your data directory and update the corresponding YAML in `cfg/<ENV_GROUP>/pretrain/<TASK>.yaml`.
@@ -325,7 +306,7 @@ Released under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Contact
 
-- Submit issues: [GitHub Issues](<DMPO_ISSUES_URL>)
+- Submit issues: [GitHub Issues](https://github.com/Guowei-Zou/dmpo-release/issues)
 - Email: zougw3@mail2.sysu.edu.cn (Guowei Zou)
 
 ---
