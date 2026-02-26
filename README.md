@@ -169,6 +169,8 @@ python script/run.py \
 ```
 Metrics and plots are stored in `dmpo_eval_results/`.
 
+> 📖 **For a comprehensive step-by-step guide** covering all environments, models, and algorithms, see the [Training Guide](docs/Training_Guide.md).
+
 ---
 
 ## Dispersive Loss Configuration
@@ -251,7 +253,7 @@ dmpo-release/
 │   ├── run.py               # unified launcher
 │   └── real_robot/          # real robot deployment
 ├── installation/             # environment setup guides
-├── docs/                     # extended documentation
+├── docs/                     # extended documentation (includes [Training Guide](docs/Training_Guide.md))
 └── sample_figs/              # sample figures
 ```
 
