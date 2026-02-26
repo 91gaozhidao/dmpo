@@ -213,15 +213,15 @@ run_debug_command() {
 pretrain_overrides() {
     local device="$1"
     local -a overrides=(
-        "wandb=null"
-        "device=${device}"
-        "train.n_epochs=2"
-        "train.save_model_freq=1"
-        "train.lr_scheduler.first_cycle_steps=2"
-        "train.lr_scheduler.warmup_steps=1"
-        "test_in_mujoco=false"
-        "auto_resume=false"
-        "max_n_episodes=2"
+        "++wandb=null"
+        "++device=${device}"
+        "++train.n_epochs=2"
+        "++train.save_model_freq=1"
+        "++train.lr_scheduler.first_cycle_steps=2"
+        "++train.lr_scheduler.warmup_steps=1"
+        "++test_in_mujoco=false"
+        "++auto_resume=false"
+        "++max_n_episodes=2"
     )
     printf '%s\n' "${overrides[@]}"
 }
@@ -231,17 +231,17 @@ pretrain_overrides() {
 finetune_overrides() {
     local device="$1"
     local -a overrides=(
-        "wandb=null"
-        "device=${device}"
-        "sim_device=${device}"
-        "train.n_train_itr=2"
-        "train.n_steps=10"
-        "train.n_critic_warmup_itr=0"
-        "train.save_model_freq=1"
-        "train.val_freq=1"
-        "env.n_envs=2"
-        "env.save_video=false"
-        "base_policy_path=null"
+        "++wandb=null"
+        "++device=${device}"
+        "++sim_device=${device}"
+        "++train.n_train_itr=2"
+        "++train.n_steps=10"
+        "++train.n_critic_warmup_itr=0"
+        "++train.save_model_freq=1"
+        "++train.val_freq=1"
+        "++env.n_envs=2"
+        "++env.save_video=false"
+        "++base_policy_path=null"
     )
     printf '%s\n' "${overrides[@]}"
 }
@@ -273,61 +273,61 @@ if should_run "gym" "pretrain"; then
     run_debug_command "gym/pretrain/diffusion_mlp" \
         "cfg/gym/pretrain/hopper-medium-v2" "pre_diffusion_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 1.2 MeanFlow MLP
     run_debug_command "gym/pretrain/meanflow_mlp" \
         "cfg/gym/pretrain/hopper-medium-v2" "pre_meanflow_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 1.3 MeanFlow Dispersive MLP
     run_debug_command "gym/pretrain/meanflow_dispersive_mlp" \
         "cfg/gym/pretrain/hopper-medium-v2" "pre_meanflow_dispersive_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 1.4 Improved MeanFlow MLP
     run_debug_command "gym/pretrain/improved_meanflow_mlp" \
         "cfg/gym/pretrain/hopper-medium-v2" "pre_improved_meanflow_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 1.5 Improved MeanFlow Dispersive MLP (core DMPO)
     run_debug_command "gym/pretrain/improved_meanflow_dispersive_mlp" \
         "cfg/gym/pretrain/hopper-medium-v2" "pre_improved_meanflow_dispersive_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 1.6 ReFlow MLP
     run_debug_command "gym/pretrain/reflow_mlp" \
         "cfg/gym/pretrain/hopper-medium-v2" "pre_reflow_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 1.7 Shortcut MLP
     run_debug_command "gym/pretrain/shortcut_mlp" \
         "cfg/gym/pretrain/hopper-medium-v2" "pre_shortcut_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 1.8 Gaussian MLP (kitchen task)
     run_debug_command "gym/pretrain/gaussian_mlp" \
         "cfg/gym/pretrain/kitchen-mixed-v0" "pre_gaussian_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 1.9 Test on another env: walker2d
     run_debug_command "gym/pretrain/walker2d_diffusion" \
         "cfg/gym/pretrain/walker2d-medium-v2" "pre_diffusion_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 1.10 Test on another env: ant
     run_debug_command "gym/pretrain/ant_meanflow" \
         "cfg/gym/pretrain/ant-medium-expert-v2" "pre_meanflow_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     echo ""
 fi
@@ -342,55 +342,55 @@ if should_run "gym" "finetune"; then
     run_debug_command "gym/finetune/ppo_diffusion_mlp" \
         "cfg/gym/finetune/hopper-v2" "ft_ppo_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 2.2 PPO DDIM MLP
     run_debug_command "gym/finetune/ppo_ddim_mlp" \
         "cfg/gym/finetune/hopper-v2" "ft_ppo_ddim_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 2.3 PPO MeanFlow MLP (core DMPO)
     run_debug_command "gym/finetune/ppo_meanflow_mlp" \
         "cfg/gym/finetune/hopper-v2" "ft_ppo_meanflow_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 2.4 PPO ReFlow MLP
     run_debug_command "gym/finetune/ppo_reflow_mlp" \
         "cfg/gym/finetune/hopper-v2" "ft_ppo_reflow_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 2.5 PPO Shortcut MLP
     run_debug_command "gym/finetune/ppo_shortcut_mlp" \
         "cfg/gym/finetune/hopper-v2" "ft_ppo_shortcut_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 2.6 FQL MLP
     run_debug_command "gym/finetune/fql_mlp" \
         "cfg/gym/finetune/hopper-v2" "ft_fql_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 2.7 PPO ReFlow Direct Likelihood
     run_debug_command "gym/finetune/ppo_reflow_direct_likelihood" \
         "cfg/gym/finetune/hopper-v2" "ft_ppo_reflow_direct_likelihood_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 2.8 PPO MeanFlow on kitchen
     run_debug_command "gym/finetune/kitchen_ppo_meanflow" \
         "cfg/gym/finetune/kitchen-mixed-v0" "ft_ppo_meanflow_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 2.9 PPO Diffusion on walker2d
     run_debug_command "gym/finetune/walker2d_ppo_diffusion" \
         "cfg/gym/finetune/walker2d-v2" "ft_ppo_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     echo ""
 fi
@@ -405,37 +405,37 @@ if should_run "robomimic" "pretrain"; then
     run_debug_command "robomimic/pretrain/lift_diffusion_mlp" \
         "cfg/robomimic/pretrain/lift" "pre_diffusion_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 3.2 Gaussian MLP
     run_debug_command "robomimic/pretrain/lift_gaussian_mlp" \
         "cfg/robomimic/pretrain/lift" "pre_gaussian_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 3.3 GMM MLP
     run_debug_command "robomimic/pretrain/lift_gmm_mlp" \
         "cfg/robomimic/pretrain/lift" "pre_gmm_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 3.4 Diffusion UNet
     run_debug_command "robomimic/pretrain/lift_diffusion_unet" \
         "cfg/robomimic/pretrain/lift" "pre_diffusion_unet" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 3.5 Gaussian Transformer
     run_debug_command "robomimic/pretrain/lift_gaussian_transformer" \
         "cfg/robomimic/pretrain/lift" "pre_gaussian_transformer" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 3.6 GMM Transformer
     run_debug_command "robomimic/pretrain/lift_gmm_transformer" \
         "cfg/robomimic/pretrain/lift" "pre_gmm_transformer" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     echo ""
 fi
@@ -450,79 +450,79 @@ if should_run "robomimic" "pretrain"; then
     run_debug_command "robomimic/pretrain/lift_diffusion_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_diffusion_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.2 Diffusion UNet Image
     run_debug_command "robomimic/pretrain/lift_diffusion_unet_img" \
         "cfg/robomimic/pretrain/lift" "pre_diffusion_unet_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.3 MeanFlow MLP Image
     run_debug_command "robomimic/pretrain/lift_meanflow_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_meanflow_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.4 MeanFlow Dispersive MLP Image
     run_debug_command "robomimic/pretrain/lift_meanflow_dispersive_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_meanflow_dispersive_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.5 ReFlow MLP Image
     run_debug_command "robomimic/pretrain/lift_reflow_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_reflow_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.6 Shortcut MLP Image
     run_debug_command "robomimic/pretrain/lift_shortcut_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_shortcut_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.7 Shortcut Dispersive MLP Image (InfoNCE-L2)
     run_debug_command "robomimic/pretrain/lift_shortcut_dispersive_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_shortcut_dispersive_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.8 Shortcut Dispersive Cosine MLP Image
     run_debug_command "robomimic/pretrain/lift_shortcut_dispersive_cosine_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_shortcut_dispersive_cosine_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.9 Shortcut Dispersive Hinge MLP Image
     run_debug_command "robomimic/pretrain/lift_shortcut_dispersive_hinge_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_shortcut_dispersive_hinge_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.10 Shortcut Dispersive Covariance MLP Image
     run_debug_command "robomimic/pretrain/lift_shortcut_dispersive_covariance_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_shortcut_dispersive_covariance_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.11 Consistency MLP Image
     run_debug_command "robomimic/pretrain/lift_consistency_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_consistency_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.12 Gaussian MLP Image
     run_debug_command "robomimic/pretrain/lift_gaussian_mlp_img" \
         "cfg/robomimic/pretrain/lift" "pre_gaussian_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 4.13 Test on other tasks: can
     run_debug_command "robomimic/pretrain/can_meanflow_mlp_img" \
         "cfg/robomimic/pretrain/can" "pre_meanflow_mlp_img" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     echo ""
 fi
@@ -537,91 +537,91 @@ if should_run "robomimic" "finetune"; then
     run_debug_command "robomimic/finetune/lift_ppo_diffusion_mlp" \
         "cfg/robomimic/finetune/lift" "ft_ppo_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.2 PPO Diffusion MLP Image
     run_debug_command "robomimic/finetune/lift_ppo_diffusion_mlp_img" \
         "cfg/robomimic/finetune/lift" "ft_ppo_diffusion_mlp_img" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.3 PPO Diffusion UNet
     run_debug_command "robomimic/finetune/lift_ppo_diffusion_unet" \
         "cfg/robomimic/finetune/lift" "ft_ppo_diffusion_unet" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.4 PPO MeanFlow MLP Image (core DMPO)
     run_debug_command "robomimic/finetune/lift_ppo_meanflow_mlp_img" \
         "cfg/robomimic/finetune/lift" "ft_ppo_meanflow_mlp_img" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.5 PPO ReFlow MLP Image
     run_debug_command "robomimic/finetune/lift_ppo_reflow_mlp_img" \
         "cfg/robomimic/finetune/lift" "ft_ppo_reflow_mlp_img" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.6 PPO Shortcut MLP Image
     run_debug_command "robomimic/finetune/lift_ppo_shortcut_mlp_img" \
         "cfg/robomimic/finetune/lift" "ft_ppo_shortcut_mlp_img" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.7 PPO Gaussian MLP
     run_debug_command "robomimic/finetune/lift_ppo_gaussian_mlp" \
         "cfg/robomimic/finetune/lift" "ft_ppo_gaussian_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.8 PPO Gaussian MLP Image
     run_debug_command "robomimic/finetune/lift_ppo_gaussian_mlp_img" \
         "cfg/robomimic/finetune/lift" "ft_ppo_gaussian_mlp_img" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.9 PPO GMM MLP
     run_debug_command "robomimic/finetune/lift_ppo_gmm_mlp" \
         "cfg/robomimic/finetune/lift" "ft_ppo_gmm_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.10 AWR Diffusion MLP
     run_debug_command "robomimic/finetune/lift_awr_diffusion_mlp" \
         "cfg/robomimic/finetune/lift" "ft_awr_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.11 DQL Diffusion MLP
     run_debug_command "robomimic/finetune/lift_dql_diffusion_mlp" \
         "cfg/robomimic/finetune/lift" "ft_dql_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.12 IDQL Diffusion MLP
     run_debug_command "robomimic/finetune/lift_idql_diffusion_mlp" \
         "cfg/robomimic/finetune/lift" "ft_idql_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.13 DIPO Diffusion MLP
     run_debug_command "robomimic/finetune/lift_dipo_diffusion_mlp" \
         "cfg/robomimic/finetune/lift" "ft_dipo_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.14 QSM Diffusion MLP
     run_debug_command "robomimic/finetune/lift_qsm_diffusion_mlp" \
         "cfg/robomimic/finetune/lift" "ft_qsm_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 5.15 RWR Diffusion MLP
     run_debug_command "robomimic/finetune/lift_rwr_diffusion_mlp" \
         "cfg/robomimic/finetune/lift" "ft_rwr_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     echo ""
 fi
@@ -636,19 +636,19 @@ if should_run "d3il" "pretrain"; then
     run_debug_command "d3il/pretrain/avoid_m1_diffusion_mlp" \
         "cfg/d3il/pretrain/avoid_m1" "pre_diffusion_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 6.2 Gaussian MLP
     run_debug_command "d3il/pretrain/avoid_m1_gaussian_mlp" \
         "cfg/d3il/pretrain/avoid_m1" "pre_gaussian_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 6.3 GMM MLP
     run_debug_command "d3il/pretrain/avoid_m1_gmm_mlp" \
         "cfg/d3il/pretrain/avoid_m1" "pre_gmm_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     echo ""
 fi
@@ -663,19 +663,19 @@ if should_run "d3il" "finetune"; then
     run_debug_command "d3il/finetune/avoid_m1_ppo_diffusion_mlp" \
         "cfg/d3il/finetune/avoid_m1" "ft_ppo_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 7.2 PPO Gaussian MLP
     run_debug_command "d3il/finetune/avoid_m1_ppo_gaussian_mlp" \
         "cfg/d3il/finetune/avoid_m1" "ft_ppo_gaussian_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 7.3 PPO GMM MLP
     run_debug_command "d3il/finetune/avoid_m1_ppo_gmm_mlp" \
         "cfg/d3il/finetune/avoid_m1" "ft_ppo_gmm_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     echo ""
 fi
@@ -690,19 +690,19 @@ if should_run "furniture" "pretrain"; then
     run_debug_command "furniture/pretrain/lamp_low_diffusion_mlp" \
         "cfg/furniture/pretrain/lamp_low" "pre_diffusion_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 8.2 Diffusion UNet
     run_debug_command "furniture/pretrain/lamp_low_diffusion_unet" \
         "cfg/furniture/pretrain/lamp_low" "pre_diffusion_unet" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     # 8.3 Gaussian MLP
     run_debug_command "furniture/pretrain/lamp_low_gaussian_mlp" \
         "cfg/furniture/pretrain/lamp_low" "pre_gaussian_mlp" \
         $(pretrain_overrides "${DEVICE}") \
-        "batch_size=4"
+        "++batch_size=4"
 
     echo ""
 fi
@@ -714,13 +714,13 @@ if should_run "furniture" "finetune"; then
     run_debug_command "furniture/finetune/lamp_low_ppo_diffusion_mlp" \
         "cfg/furniture/finetune/lamp_low" "ft_ppo_diffusion_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     # 8.5 PPO Gaussian MLP
     run_debug_command "furniture/finetune/lamp_low_ppo_gaussian_mlp" \
         "cfg/furniture/finetune/lamp_low" "ft_ppo_gaussian_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "train.batch_size=20"
+        "++train.batch_size=20"
 
     echo ""
 fi
