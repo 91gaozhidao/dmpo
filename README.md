@@ -169,7 +169,7 @@ python script/run.py \
 ```
 Metrics and plots are stored in `dmpo_eval_results/`.
 
-> 📖 **For a comprehensive step-by-step guide** covering all environments, models, and algorithms, see the [Training Guide (各阶段训练微调详细操作指南)](docs/Training_Guide.md).
+> 📖 **For a comprehensive step-by-step guide** covering all environments, models, and algorithms, see the [Training Guide](docs/Training_Guide.md).
 
 ---
 

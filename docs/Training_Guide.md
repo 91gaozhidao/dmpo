@@ -1,6 +1,8 @@
-# DMPO 各阶段训练与微调详细操作指南
+# DMPO Training and Fine-tuning Guide / DMPO 各阶段训练与微调详细操作指南
 
-本文档提供 DMPO（Dispersive MeanFlow Policy Optimization）项目从环境搭建、数据准备、预训练、微调到评估的完整操作指南，覆盖所有支持的环境和算法。
+This document provides a complete step-by-step guide for the DMPO (Dispersive MeanFlow Policy Optimization) project, covering environment setup, data preparation, pre-training, fine-tuning, and evaluation across all supported environments and algorithms.
+
+本文档提供 DMPO 项目从环境搭建、数据准备、预训练、微调到评估的完整操作指南，覆盖所有支持的环境和算法。
 
 ---
 
