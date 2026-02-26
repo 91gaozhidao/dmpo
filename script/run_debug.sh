@@ -669,14 +669,14 @@ if should_run "d3il" "finetune"; then
         $(finetune_overrides "${DEVICE}") \
         "++train.batch_size=20"
 
-    # 7.2 PPO Gaussian MLP
+    # 7.2 PPO Gaussian MLP — fix _target_ path (config references non-existent agent.finetune.train_ppo_gaussian_agent)
     run_debug_command "d3il/finetune/avoid_m1_ppo_gaussian_mlp" \
         "cfg/d3il/finetune/avoid_m1" "ft_ppo_gaussian_mlp" \
         $(finetune_overrides "${DEVICE}") \
         "++train.batch_size=20" \
         "++_target_=agent.finetune.dppo.train_ppo_gaussian_agent.TrainPPOGaussianAgent"
 
-    # 7.3 PPO GMM MLP
+    # 7.3 PPO GMM MLP — same _target_ fix; GMM uses the same agent class, model differs via config
     run_debug_command "d3il/finetune/avoid_m1_ppo_gmm_mlp" \
         "cfg/d3il/finetune/avoid_m1" "ft_ppo_gmm_mlp" \
         $(finetune_overrides "${DEVICE}") \
