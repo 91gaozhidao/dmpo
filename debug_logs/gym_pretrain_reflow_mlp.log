@@ -1,0 +1,73 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:08:03,988][__main__][INFO] - Set sim_device=0 from cfg.
+[DEBUG] Creating agent class: agent.pretrain.train_reflow_agent.TrainReFlowAgent
+[DEBUG] Initializing agent...
+[2026-02-26 15:08:05,458][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/hopper-medium-v2_pre_reflow_mlp_ta4_td20_seed42/2026-02-26_15-08-03_42/architecture.log
+max_n_episodes=-1
+[2026-02-26 15:08:05,461][agent.dataset.sequence][INFO] - max_n_episodes specified as -1, fall back to maximum value 1187
+[2026-02-26 15:08:05,951][agent.dataset.sequence][INFO] - Successfully loaded dataset from /home/dell/datasets/gym/hopper-medium-v2/train.npz
+[2026-02-26 15:08:05,951][agent.dataset.sequence][INFO] - Number of episodes: 1187
+[2026-02-26 15:08:05,951][agent.dataset.sequence][INFO] - States shape/type: (torch.Size([999762, 17]), torch.float32)
+[2026-02-26 15:08:05,951][agent.dataset.sequence][INFO] - Actions shape/type: (torch.Size([999762, 6]), torch.float32)
+[2026-02-26 15:08:05,951][agent.dataset.sequence][INFO] - Finished creating StitchedSequenceDataset from /home/dell/datasets/gym/hopper-medium-v2/train.npz
+dataset_train=996201
+[2026-02-26 15:08:05,952][agent.pretrain.train_agent][INFO] - test_in_mujoco==False
+[2026-02-26 15:08:05,953][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/hopper-medium-v2_pre_reflow_mlp_ta4_td20_seed42/2026-02-26_15-08-03_42/architecture.log
+[DEBUG] Starting agent.run()...
+dataloader_train=249050
+[2026-02-26 15:08:05,953][agent.pretrain.train_agent][INFO] - self.epoch=1, begin training.
+  0%|          | 0/2 [00:00<?, ?it/s]  0%|          | 0/2 [00:00<?, ?it/s]
+Error executing job with overrides: ['++wandb=null', '++device=cuda:0', '++train.n_epochs=2', '++train.save_model_freq=1', '++train.lr_scheduler.first_cycle_steps=2', '++train.lr_scheduler.warmup_steps=1', '++test_in_mujoco=false', '++auto_resume=false', '++max_n_episodes=2', '++batch_size=4']
+Traceback (most recent call last):
+  File "/home/dell/workspace/dmpo/script/run.py", line 182, in <module>
+    main()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+    raise ex
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 132, in run
+    _ = ret.return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 260, in return_value
+    raise self._return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/dell/workspace/dmpo/script/run.py", line 177, in main
+    agent.run()
+  File "/home/dell/workspace/dmpo/agent/pretrain/train_agent.py", line 422, in run
+    loss_train = self.get_loss(batch_train)
+  File "/home/dell/workspace/dmpo/agent/pretrain/train_reflow_agent.py", line 57, in get_loss
+    loss= self.model.loss(xt, t, cond, v)
+  File "/home/dell/workspace/dmpo/model/flow/reflow.py", line 170, in loss
+    v_hat = self.network(xt, t, obs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/workspace/dmpo/model/flow/mlp_flow.py", line 134, in forward
+    vel = self.mlp_mean(vel_feature)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/workspace/dmpo/model/common/mlp.py", line 161, in forward
+    x = layer(x)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/linear.py", line 134, in forward
+    return F.linear(input, self.weight, self.bias)
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (4x57 and 39x512)

@@ -1,0 +1,116 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:07:54,597][__main__][INFO] - No EGL device specified in cfg, falling back to osmesa.
+[DEBUG] Creating agent class: agent.pretrain.train_shortcut_dispersive_agent.TrainMeanFlowDispersiveAgent
+[DEBUG] Initializing agent...
+[2026-02-26 15:07:56,080][model.flow.shortcut_dispersive][INFO] - Initialized MeanFlow with Dispersive Loss: weight=0.5, type=infonce_l2
+[2026-02-26 15:07:56,082][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/hopper-medium-v2_pre_meanflow_dispersive_mlp_ta4_infnce_d0p5_t0p5/2026-02-26_15-07-54_42/architecture.log
+max_n_episodes=2
+[2026-02-26 15:07:56,486][agent.dataset.sequence][INFO] - Successfully loaded dataset from /home/dell/datasets/gym/hopper-medium-v2/train.npz
+[2026-02-26 15:07:56,486][agent.dataset.sequence][INFO] - Number of episodes: 2
+[2026-02-26 15:07:56,486][agent.dataset.sequence][INFO] - States shape/type: (torch.Size([2000, 17]), torch.float32)
+[2026-02-26 15:07:56,487][agent.dataset.sequence][INFO] - Actions shape/type: (torch.Size([2000, 6]), torch.float32)
+[2026-02-26 15:07:56,487][agent.dataset.sequence][INFO] - Finished creating StitchedSequenceDataset from /home/dell/datasets/gym/hopper-medium-v2/train.npz
+dataset_train=1994
+[2026-02-26 15:07:56,488][agent.pretrain.train_agent][INFO] - test_in_mujoco==False
+[2026-02-26 15:07:56,488][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/hopper-medium-v2_pre_meanflow_dispersive_mlp_ta4_infnce_d0p5_t0p5/2026-02-26_15-07-54_42/architecture.log
+[2026-02-26 15:07:56,488][agent.pretrain.train_shortcut_dispersive_agent][INFO] - Initialized MeanFlow Dispersive training agent
+[2026-02-26 15:07:56,488][agent.pretrain.train_shortcut_dispersive_agent][INFO] - Dispersive loss configuration: {'dispersive_loss_weight': 0.5, 'dispersive_loss_type': 'infonce_l2', 'dispersive_temperature': 0.5, 'dispersive_margin': 1.0}
+[DEBUG] Starting agent.run()...
+dataloader_train=498
+[2026-02-26 15:07:56,488][agent.pretrain.train_agent][INFO] - self.epoch=1, begin training.
+  0%|          | 0/2 [00:00<?, ?it/s][2026-02-26 15:07:56,517][agent.pretrain.train_shortcut_dispersive_agent][ERROR] - Error computing MeanFlow dispersive loss: mat1 and mat2 shapes cannot be multiplied (4x17 and 11x64)
+[2026-02-26 15:07:56,518][agent.pretrain.train_shortcut_dispersive_agent][ERROR] - Fallback loss computation also failed: mat1 and mat2 shapes cannot be multiplied (4x17 and 11x64)
+  0%|          | 0/2 [00:00<?, ?it/s]
+Error executing job with overrides: ['++wandb=null', '++device=cuda:0', '++train.n_epochs=2', '++train.save_model_freq=1', '++train.lr_scheduler.first_cycle_steps=2', '++train.lr_scheduler.warmup_steps=1', '++test_in_mujoco=false', '++auto_resume=false', '++max_n_episodes=2', '++batch_size=4']
+Traceback (most recent call last):
+  File "/home/dell/workspace/dmpo/agent/pretrain/train_shortcut_dispersive_agent.py", line 117, in get_loss
+    velocity_pred = self.model.network.forward(action, t, r, cond)
+  File "/home/dell/workspace/dmpo/model/flow/mlp_meanflow.py", line 143, in forward
+    cond_emb = self.cond_mlp(state) if hasattr(self, "cond_mlp") else state
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/workspace/dmpo/model/common/mlp.py", line 109, in forward
+    x = m(x)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/container.py", line 253, in forward
+    input = module(input)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/linear.py", line 134, in forward
+    return F.linear(input, self.weight, self.bias)
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (4x17 and 11x64)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/dell/workspace/dmpo/script/run.py", line 182, in <module>
+    main()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+    raise ex
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 132, in run
+    _ = ret.return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 260, in return_value
+    raise self._return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/dell/workspace/dmpo/script/run.py", line 177, in main
+    agent.run()
+  File "/home/dell/workspace/dmpo/agent/pretrain/train_agent.py", line 422, in run
+    loss_train = self.get_loss(batch_train)
+  File "/home/dell/workspace/dmpo/agent/pretrain/train_shortcut_dispersive_agent.py", line 128, in get_loss
+    raise e
+  File "/home/dell/workspace/dmpo/agent/pretrain/train_shortcut_dispersive_agent.py", line 102, in get_loss
+    loss = self.model.loss(*batch_data)
+  File "/home/dell/workspace/dmpo/model/flow/shortcut_dispersive.py", line 332, in loss
+    u, dudt = torch.autograd.functional.jvp(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/autograd/functional.py", line 442, in jvp
+    outputs = func(*inputs)
+  File "/home/dell/workspace/dmpo/model/flow/shortcut_dispersive.py", line 330, in network_fn
+    return self.network(z, t_val, r_val, cond)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/workspace/dmpo/model/flow/mlp_meanflow.py", line 143, in forward
+    cond_emb = self.cond_mlp(state) if hasattr(self, "cond_mlp") else state
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/workspace/dmpo/model/common/mlp.py", line 109, in forward
+    x = m(x)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/container.py", line 253, in forward
+    input = module(input)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1776, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1787, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/nn/modules/linear.py", line 134, in forward
+    return F.linear(input, self.weight, self.bias)
+RuntimeError: mat1 and mat2 shapes cannot be multiplied (4x17 and 11x64)

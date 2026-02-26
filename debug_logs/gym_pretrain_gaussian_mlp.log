@@ -1,0 +1,33 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:08:10,546][__main__][INFO] - No EGL device specified in cfg, falling back to osmesa.
+[DEBUG] Creating agent class: agent.pretrain.train_gaussian_agent.TrainGaussianAgent
+[DEBUG] Initializing agent...
+[2026-02-26 15:08:11,513][model.common.gaussian][INFO] - Number of network parameters: 156454
+[2026-02-26 15:08:11,515][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/kitchen-mixed-v0_pre_gaussian_mlp_ta4/2026-02-26_15-08-10_42/architecture.log
+max_n_episodes=-1
+[2026-02-26 15:08:11,518][agent.dataset.sequence][INFO] - max_n_episodes specified as -1, fall back to maximum value 612
+[2026-02-26 15:08:11,640][agent.dataset.sequence][INFO] - Successfully loaded dataset from /home/dell/datasets/gym/kitchen-mixed-v0/train.npz
+[2026-02-26 15:08:11,640][agent.dataset.sequence][INFO] - Number of episodes: 612
+[2026-02-26 15:08:11,640][agent.dataset.sequence][INFO] - States shape/type: (torch.Size([136931, 60]), torch.float32)
+[2026-02-26 15:08:11,640][agent.dataset.sequence][INFO] - Actions shape/type: (torch.Size([136931, 9]), torch.float32)
+[2026-02-26 15:08:11,640][agent.dataset.sequence][INFO] - Finished creating StitchedSequenceDataset from /home/dell/datasets/gym/kitchen-mixed-v0/train.npz
+dataset_train=135095
+[2026-02-26 15:08:12,123][agent.pretrain.train_agent][INFO] - test_in_mujoco==False
+[2026-02-26 15:08:12,123][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/kitchen-mixed-v0_pre_gaussian_mlp_ta4/2026-02-26_15-08-10_42/architecture.log
+[DEBUG] Starting agent.run()...
+[2026-02-26 15:08:15,416][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/gym/pretrain/kitchen-mixed-v0_pre_gaussian_mlp_ta4/2026-02-26_15-08-10_42/checkpoint/state_1.pt
+
+[2026-02-26 15:08:15,416][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/gym/pretrain/kitchen-mixed-v0_pre_gaussian_mlp_ta4/2026-02-26_15-08-10_42/result.npz
+
+[2026-02-26 15:08:15,416][agent.pretrain.train_gaussian_agent][INFO] - 1: train loss   3.8390 | entropy:  -0.8836 | t:  3.2928
+[2026-02-26 15:08:18,520][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/gym/pretrain/kitchen-mixed-v0_pre_gaussian_mlp_ta4/2026-02-26_15-08-10_42/checkpoint/state_2.pt
+
+[2026-02-26 15:08:18,520][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/gym/pretrain/kitchen-mixed-v0_pre_gaussian_mlp_ta4/2026-02-26_15-08-10_42/result.npz
+
+[2026-02-26 15:08:18,520][agent.pretrain.train_gaussian_agent][INFO] - 2: train loss   1.6256 | entropy:  -0.8836 | t:  3.1040
+[DEBUG] Agent.run() completed.

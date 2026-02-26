@@ -1,0 +1,82 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:13:53,622][__main__][INFO] - Set sim_device=0 from cfg.
+[DEBUG] Creating agent class: agent.finetune.reinflow.train_ppo_flow_agent.TrainPPOFlowAgent
+[DEBUG] Initializing agent...
+Making gym environment id=hopper-medium-v2
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/gym/spaces/box.py:78: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Making gym environment id=hopper-medium-v2
+Making gym environment id=hopper-medium-v2
+Error executing job with overrides: ['++wandb=null', '++device=cuda:0', '++sim_device=cuda:0', '++train.n_train_itr=2', '++train.n_steps=10', '++train.n_critic_warmup_itr=0', '++train.save_model_freq=1', '++train.val_freq=1', '++env.n_envs=2', '++env.save_video=false', '++base_policy_path=null', '++train.batch_size=20']
+Traceback (most recent call last):
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 644, in _locate
+    obj = getattr(obj, part)
+AttributeError: module 'model.flow' has no attribute 'direct_likelihood'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 650, in _locate
+    obj = import_module(mod)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+  File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1004, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'model.flow.direct_likelihood'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 134, in _resolve_target
+    target = _locate(target)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 653, in _locate
+    raise ImportError(
+ImportError: Error loading 'model.flow.direct_likelihood.ppoflow_direct.PPOFlowDirect':
+ModuleNotFoundError("No module named 'model.flow.direct_likelihood'")
+Are you sure that 'direct_likelihood' is importable from module 'model.flow'?
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/dell/workspace/dmpo/script/run.py", line 182, in <module>
+    main()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+    raise ex
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 132, in run
+    _ = ret.return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 260, in return_value
+    raise self._return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/dell/workspace/dmpo/script/run.py", line 175, in main
+    agent = cls(cfg)
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_flow_agent.py", line 49, in __init__
+    super().__init__(cfg)
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_agent.py", line 49, in __init__
+    super().__init__(cfg)
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_agent.py", line 116, in __init__
+    self.model = hydra.utils.instantiate(cfg.model)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 226, in instantiate
+    return instantiate_node(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 333, in instantiate_node
+    _target_ = _resolve_target(node.get(_Keys.TARGET), full_key)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 139, in _resolve_target
+    raise InstantiationException(msg) from e
+hydra.errors.InstantiationException: Error locating target 'model.flow.direct_likelihood.ppoflow_direct.PPOFlowDirect', set env var HYDRA_FULL_ERROR=1 to see chained exception.
+full_key: model

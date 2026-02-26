@@ -1,0 +1,40 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:16:51,863][__main__][INFO] - No EGL device specified in cfg, falling back to osmesa.
+[DEBUG] Creating agent class: agent.pretrain.train_diffusion_agent.TrainDiffusionAgent
+[DEBUG] Initializing agent...
+[2026-02-26 15:16:53,252][model.diffusion.unet][INFO] - Channel dimensions: [(10, 64), (64, 128), (128, 256)]
+[2026-02-26 15:16:53,461][root][INFO] - Number of network parameters: 6806170
+[2026-02-26 15:16:53,526][agent.pretrain.train_diffusion_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/furniture/pretrain/lamp_low_dim_pre_diffusion_unet_ta16_td100/2026-02-26_15-16-51_42/architecture.log
+max_n_episodes=-1
+[2026-02-26 15:16:53,528][agent.dataset.sequence][INFO] - max_n_episodes specified as -1, fall back to maximum value 50
+[2026-02-26 15:16:53,565][agent.dataset.sequence][INFO] - Successfully loaded dataset from /home/dell/datasets/furniture/lamp_low/train.npz
+[2026-02-26 15:16:53,565][agent.dataset.sequence][INFO] - Number of episodes: 50
+[2026-02-26 15:16:53,565][agent.dataset.sequence][INFO] - States shape/type: (torch.Size([29688, 44]), torch.float32)
+[2026-02-26 15:16:53,565][agent.dataset.sequence][INFO] - Actions shape/type: (torch.Size([29688, 10]), torch.float32)
+[2026-02-26 15:16:53,565][agent.dataset.sequence][INFO] - Finished creating StitchedSequenceDataset from /home/dell/datasets/furniture/lamp_low/train.npz
+dataset_train=28938
+[2026-02-26 15:16:53,577][agent.pretrain.train_agent][INFO] - test_in_mujoco==False
+[2026-02-26 15:16:53,579][agent.pretrain.train_diffusion_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/furniture/pretrain/lamp_low_dim_pre_diffusion_unet_ta16_td100/2026-02-26_15-16-51_42/architecture.log
+[2026-02-26 15:16:53,581][agent.pretrain.train_diffusion_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/furniture/pretrain/lamp_low_dim_pre_diffusion_unet_ta16_td100/2026-02-26_15-16-51_42/architecture.log
+[DEBUG] Starting agent.run()...
+dataloader_train=113
+[2026-02-26 15:16:53,581][agent.pretrain.train_agent][INFO] - self.epoch=1, begin training.
+  0%|          | 0/2 [00:00<?, ?it/s][2026-02-26 15:16:58,567][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/furniture/pretrain/lamp_low_dim_pre_diffusion_unet_ta16_td100/2026-02-26_15-16-51_42/checkpoint/state_1.pt
+
+[2026-02-26 15:16:58,568][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/furniture/pretrain/lamp_low_dim_pre_diffusion_unet_ta16_td100/2026-02-26_15-16-51_42/result.npz
+
+[2026-02-26 15:16:58,568][agent.pretrain.train_agent][INFO] - 1: train loss   1.0245 | t:  4.9866
+[2026-02-26 15:16:58,568][agent.pretrain.train_agent][INFO] - epoch=0 , self.first_epoch=0, last epoch=2, loss_train=1.0245
+ 50%|█████     | 1/2 [00:04<00:04,  4.99s/it][2026-02-26 15:17:04,162][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/furniture/pretrain/lamp_low_dim_pre_diffusion_unet_ta16_td100/2026-02-26_15-16-51_42/checkpoint/state_2.pt
+
+[2026-02-26 15:17:04,162][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/furniture/pretrain/lamp_low_dim_pre_diffusion_unet_ta16_td100/2026-02-26_15-16-51_42/result.npz
+
+[2026-02-26 15:17:04,163][agent.pretrain.train_agent][INFO] - 2: train loss   0.6868 | t:  5.5954
+[2026-02-26 15:17:04,163][agent.pretrain.train_agent][INFO] - epoch=1 , self.first_epoch=0, last epoch=2, loss_train=0.6868
+100%|██████████| 2/2 [00:10<00:00,  5.34s/it]100%|██████████| 2/2 [00:10<00:00,  5.29s/it]
+[DEBUG] Agent.run() completed.

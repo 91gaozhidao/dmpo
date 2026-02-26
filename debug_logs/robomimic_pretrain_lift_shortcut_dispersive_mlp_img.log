@@ -1,0 +1,40 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:15:21,508][__main__][INFO] - No EGL device specified in cfg, falling back to osmesa.
+[DEBUG] Creating agent class: agent.pretrain.train_shortcut_dispersive_agent.TrainShortCutDispersiveAgent
+[DEBUG] Initializing agent...
+[2026-02-26 15:15:23,049][model.flow.shortcut_dispersive][INFO] - Initialized ShortCut Flow with Dispersive Loss: weight=0.5, type=infonce_l2
+[2026-02-26 15:15:23,052][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/robomimic/pretrain/lift/lift_pre_shortcut_dispersive_mlp_img_ta4_td20_infnce_d0p5_t0p5/2026-02-26_15-15-21_42/architecture.log
+max_n_episodes=2
+[2026-02-26 15:15:23,060][agent.dataset.sequence][INFO] - Successfully loaded dataset from /home/dell/datasets/robomimic/lift-img/train.npz
+[2026-02-26 15:15:23,060][agent.dataset.sequence][INFO] - Number of episodes: 2
+[2026-02-26 15:15:23,060][agent.dataset.sequence][INFO] - States shape/type: (torch.Size([103, 9]), torch.float32)
+[2026-02-26 15:15:23,060][agent.dataset.sequence][INFO] - Actions shape/type: (torch.Size([103, 7]), torch.float32)
+[2026-02-26 15:15:23,743][agent.dataset.sequence][INFO] - Images shape/type: (torch.Size([103, 3, 96, 96]), torch.uint8)
+[2026-02-26 15:15:23,743][agent.dataset.sequence][INFO] - Finished creating StitchedSequenceDataset from /home/dell/datasets/robomimic/lift-img/train.npz
+dataset_train=97
+[2026-02-26 15:15:23,746][agent.pretrain.train_agent][INFO] - test_in_mujoco==False
+[2026-02-26 15:15:23,746][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/robomimic/pretrain/lift/lift_pre_shortcut_dispersive_mlp_img_ta4_td20_infnce_d0p5_t0p5/2026-02-26_15-15-21_42/architecture.log
+[2026-02-26 15:15:23,746][agent.pretrain.train_shortcut_dispersive_agent][INFO] - Initialized ShortCut Flow Dispersive training agent
+[2026-02-26 15:15:23,747][agent.pretrain.train_shortcut_dispersive_agent][INFO] - Dispersive loss configuration: {'dispersive_loss_weight': 0.5, 'dispersive_loss_type': 'infonce_l2', 'dispersive_temperature': 0.5, 'dispersive_margin': 1.0, 'apply_to_embeddings': True, 'apply_to_features': False}
+[DEBUG] Starting agent.run()...
+dataloader_train=24
+[2026-02-26 15:15:23,747][agent.pretrain.train_agent][INFO] - self.epoch=1, begin training.
+  0%|          | 0/2 [00:00<?, ?it/s]/home/dell/miniconda3/envs/dmpo/lib/python3.10/contextlib.py:103: FutureWarning: `torch.backends.cuda.sdp_kernel()` is deprecated. In the future, this context manager will be removed. Please see `torch.nn.attention.sdpa_kernel()` for the new context manager, with updated signature.
+  self.gen = func(*args, **kwds)
+[2026-02-26 15:15:24,373][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/robomimic/pretrain/lift/lift_pre_shortcut_dispersive_mlp_img_ta4_td20_infnce_d0p5_t0p5/2026-02-26_15-15-21_42/checkpoint/state_1.pt
+
+[2026-02-26 15:15:24,373][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/robomimic/pretrain/lift/lift_pre_shortcut_dispersive_mlp_img_ta4_td20_infnce_d0p5_t0p5/2026-02-26_15-15-21_42/result.npz
+
+[2026-02-26 15:15:24,373][agent.pretrain.train_agent][INFO] - epoch=0 , self.first_epoch=0, last epoch=2, loss_train=-9.5844
+ 50%|█████     | 1/2 [00:00<00:00,  1.60it/s][2026-02-26 15:15:24,719][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/robomimic/pretrain/lift/lift_pre_shortcut_dispersive_mlp_img_ta4_td20_infnce_d0p5_t0p5/2026-02-26_15-15-21_42/checkpoint/state_2.pt
+
+[2026-02-26 15:15:24,719][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/robomimic/pretrain/lift/lift_pre_shortcut_dispersive_mlp_img_ta4_td20_infnce_d0p5_t0p5/2026-02-26_15-15-21_42/result.npz
+
+[2026-02-26 15:15:24,719][agent.pretrain.train_agent][INFO] - epoch=1 , self.first_epoch=0, last epoch=2, loss_train=-9.6869
+100%|██████████| 2/2 [00:00<00:00,  2.17it/s]100%|██████████| 2/2 [00:00<00:00,  2.06it/s]
+[DEBUG] Agent.run() completed.

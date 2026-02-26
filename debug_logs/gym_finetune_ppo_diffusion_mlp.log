@@ -1,0 +1,56 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:13:27,562][__main__][INFO] - Set sim_device=0 from cfg.
+[DEBUG] Creating agent class: agent.finetune.reinflow.train_ppo_diffusion_agent.TrainPPODiffusionAgent
+[DEBUG] Initializing agent...
+Making gym environment id=hopper-medium-v2
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/gym/spaces/box.py:78: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Making gym environment id=hopper-medium-v2
+Making gym environment id=hopper-medium-v2
+[2026-02-26 15:13:29,185][root][INFO] - Number of network parameters: 553020
+[2026-02-26 15:13:29,247][root][INFO] - Cloned model for fine-tuning
+[2026-02-26 15:13:29,247][root][INFO] - Turned off gradients of the pretrained network
+[2026-02-26 15:13:29,247][root][INFO] - Number of finetuned parameters: 553020
+[2026-02-26 15:13:29,576][agent.finetune.reinflow.train_ppo_agent][INFO] - learning rate saved to /home/dell/workspace/dmpo/log/gym/finetune/hopper-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-27_42/test_lr_schedulers.png
+[2026-02-26 15:13:29,594][agent.finetune.reinflow.train_ppo_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/finetune/hopper-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-27_42/architecture.log
+[DEBUG] Starting agent.run()...
+Error executing job with overrides: ['++wandb=null', '++device=cuda:0', '++sim_device=cuda:0', '++train.n_train_itr=2', '++train.n_steps=10', '++train.n_critic_warmup_itr=0', '++train.save_model_freq=1', '++train.val_freq=1', '++env.n_envs=2', '++env.save_video=false', '++base_policy_path=null', '++train.batch_size=20']
+Traceback (most recent call last):
+  File "/home/dell/workspace/dmpo/script/run.py", line 182, in <module>
+    main()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+    raise ex
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 132, in run
+    _ = ret.return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 260, in return_value
+    raise self._return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/dell/workspace/dmpo/script/run.py", line 177, in main
+    agent.run()
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_diffusion_agent.py", line 225, in run
+    self.reset_env() # for gpu version, add device=self.device
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_agent.py", line 324, in reset_env
+    self.prev_obs_venv = self.reset_env_all(options_venv=self.options_venv)
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_agent.py", line 189, in reset_env_all
+    obs_venv = self.venv.reset_arg(options_list=options_venv)
+  File "/home/dell/workspace/dmpo/env/gym_utils/async_vector_env.py", line 724, in reset_arg
+    results = self.call_sync_arg("reset", "options", options_list)
+  File "/home/dell/workspace/dmpo/env/gym_utils/async_vector_env.py", line 711, in call_sync_arg
+    raise exctype(f"Error in Worker-{index} during {method_name}: {value}")
+ValueError: Error in Worker-1 during reset: operands could not be broadcast together with shapes (11,) (17,) 

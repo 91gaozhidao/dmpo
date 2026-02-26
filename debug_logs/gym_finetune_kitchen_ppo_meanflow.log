@@ -1,0 +1,81 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:13:56,418][__main__][INFO] - Set sim_device=0 from cfg.
+[DEBUG] Creating agent class: agent.finetune.reinflow.train_ppo_meanflow_agent.TrainPPOMeanFlowAgent
+[DEBUG] Initializing agent...
+Making gym environment id=kitchen-mixed-v0
+Reading configurations for Franka
+Initializing Franka sim
+Error executing job with overrides: ['++wandb=null', '++device=cuda:0', '++sim_device=cuda:0', '++train.n_train_itr=2', '++train.n_steps=10', '++train.n_critic_warmup_itr=0', '++train.save_model_freq=1', '++train.val_freq=1', '++env.n_envs=2', '++env.save_video=false', '++base_policy_path=null', '++train.batch_size=20']
+Traceback (most recent call last):
+  File "/home/dell/workspace/dmpo/script/run.py", line 182, in <module>
+    main()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+    raise ex
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 132, in run
+    _ = ret.return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 260, in return_value
+    raise self._return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/dell/workspace/dmpo/script/run.py", line 175, in main
+    agent = cls(cfg)
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_meanflow_agent.py", line 47, in __init__
+    super().__init__(cfg)
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_shortcut_agent.py", line 45, in __init__
+    super().__init__(cfg)
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_agent.py", line 49, in __init__
+    super().__init__(cfg)
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_agent.py", line 76, in __init__
+    self.venv = make_async(
+  File "/home/dell/workspace/dmpo/env/gym_utils/__init__.py", line 255, in make_async
+    AsyncVectorEnv(
+  File "/home/dell/workspace/dmpo/env/gym_utils/async_vector_env.py", line 170, in __init__
+    dummy_env = dummy_env_fn()
+  File "/home/dell/workspace/dmpo/env/gym_utils/__init__.py", line 202, in _make_env
+    env = make_(id, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/gym/envs/registration.py", line 676, in make
+    return registry.make(id, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/gym/envs/registration.py", line 520, in make
+    return spec.make(**kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/gym/envs/registration.py", line 140, in make
+    env = cls(**_kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/d4rl/kitchen/adept_envs/utils/configurable.py", line 132, in __init__
+    base_init(self, *args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/d4rl/kitchen/kitchen_envs.py", line 39, in __init__
+    super(KitchenBase, self).__init__(**kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/d4rl/kitchen/adept_envs/franka/kitchen_multitask_v0.py", line 181, in __init__
+    super(KitchenTaskRelaxV1, self).__init__()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/d4rl/kitchen/adept_envs/utils/configurable.py", line 132, in __init__
+    base_init(self, *args, **kwargs)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/d4rl/kitchen/adept_envs/franka/kitchen_multitask_v0.py", line 46, in __init__
+    super().__init__(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/d4rl/kitchen/adept_envs/robot_env.py", line 80, in __init__
+    super(RobotEnv, self).__init__(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/d4rl/kitchen/adept_envs/mujoco_env.py", line 62, in __init__
+    self.sim_robot = MujocoSimRobot(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/d4rl/kitchen/adept_envs/simulation/sim_robot.py", line 61, in __init__
+    self.sim = dm_mujoco.Physics.from_xml_path(model_file)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/dm_control/mujoco/engine.py", line 484, in from_xml_path
+    model = wrapper.MjModel.from_xml_path(file_path)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/dm_control/mujoco/wrapper/core.py", line 306, in from_xml_path
+    model_ptr = _get_model_ptr_from_xml(xml_path=xml_path)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/dm_control/mujoco/wrapper/core.py", line 181, in _get_model_ptr_from_xml
+    ptr = mujoco.MjModel.from_xml_path(xml_path, assets or {})
+ValueError: XML Error: top-level default class 'main' cannot be renamed
+Element 'default', line 0
+

@@ -1,0 +1,65 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:13:44,729][__main__][INFO] - Set sim_device=0 from cfg.
+[2026-02-26 15:13:44,730][__main__][INFO] - Downloading normalization statistics from https://drive.google.com/file/d/1HHZ2X6r5io6hjG-MHVFFoPMJV2fJ3lis/view?usp=drive_link to /home/dell/workspace/dmpo/data-offline/gym/hopper-medium-v2/normalization.npz
+Downloading...
+From: https://drive.google.com/uc?id=1HHZ2X6r5io6hjG-MHVFFoPMJV2fJ3lis
+To: /home/dell/workspace/dmpo/data-offline/gym/hopper-medium-v2/normalization.npz
+  0%|          | 0.00/1.13k [00:00<?, ?B/s]100%|██████████| 1.13k/1.13k [00:00<00:00, 11.1MB/s]
+[DEBUG] Creating agent class: agent.finetune.flow_baselines.train_fql_agent.TrainFQLAgent
+[DEBUG] Initializing agent...
+Making gym environment id=hopper-medium-v2
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/gym/spaces/box.py:78: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Making gym environment id=hopper-medium-v2
+Making gym environment id=hopper-medium-v2
+Error executing job with overrides: ['++wandb=null', '++device=cuda:0', '++sim_device=cuda:0', '++train.n_train_itr=2', '++train.n_steps=10', '++train.n_critic_warmup_itr=0', '++train.save_model_freq=1', '++train.val_freq=1', '++env.n_envs=2', '++env.save_video=false', '++base_policy_path=null', '++train.batch_size=20']
+Traceback (most recent call last):
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 92, in _call_target
+    return _target_(*args, **kwargs)
+  File "/home/dell/workspace/dmpo/agent/dataset/sequence.py", line 202, in __init__
+    dataset = np.load(dataset_path, allow_pickle=False)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/numpy/lib/npyio.py", line 427, in load
+    fid = stack.enter_context(open(os_fspath(file), "rb"))
+FileNotFoundError: [Errno 2] No such file or directory: '/home/dell/workspace/dmpo/data-offline/gym/hopper-medium-v2/train.npz'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/dell/workspace/dmpo/script/run.py", line 182, in <module>
+    main()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+    raise ex
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 132, in run
+    _ = ret.return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 260, in return_value
+    raise self._return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/dell/workspace/dmpo/script/run.py", line 175, in main
+    agent = cls(cfg)
+  File "/home/dell/workspace/dmpo/agent/finetune/flow_baselines/train_fql_agent.py", line 46, in __init__
+    self.dataset_offline = hydra.utils.instantiate(cfg.offline_dataset)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 226, in instantiate
+    return instantiate_node(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 347, in instantiate_node
+    return _call_target(_target_, partial, args, kwargs, full_key)
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/instantiate/_instantiate2.py", line 97, in _call_target
+    raise InstantiationException(msg) from e
+hydra.errors.InstantiationException: Error in call to target 'agent.dataset.sequence.StitchedSequenceQLearningDataset':
+FileNotFoundError(2, 'No such file or directory')
+full_key: offline_dataset

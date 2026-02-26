@@ -1,0 +1,33 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:16:32,925][__main__][INFO] - No EGL device specified in cfg, falling back to osmesa.
+[DEBUG] Creating agent class: agent.pretrain.train_gaussian_agent.TrainGaussianAgent
+[DEBUG] Initializing agent...
+[2026-02-26 15:16:33,994][model.common.gaussian][INFO] - Number of network parameters: 134922
+[2026-02-26 15:16:33,996][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_gaussian_mlp_ta4/2026-02-26_15-16-32_42/architecture.log
+max_n_episodes=-1
+[2026-02-26 15:16:34,000][agent.dataset.sequence][INFO] - max_n_episodes specified as -1, fall back to maximum value 8
+[2026-02-26 15:16:34,000][agent.dataset.sequence][INFO] - Successfully loaded dataset from /home/dell/datasets/d3il/avoid_m1/train.npz
+[2026-02-26 15:16:34,000][agent.dataset.sequence][INFO] - Number of episodes: 8
+[2026-02-26 15:16:34,000][agent.dataset.sequence][INFO] - States shape/type: (torch.Size([571, 4]), torch.float32)
+[2026-02-26 15:16:34,000][agent.dataset.sequence][INFO] - Actions shape/type: (torch.Size([571, 2]), torch.float32)
+[2026-02-26 15:16:34,000][agent.dataset.sequence][INFO] - Finished creating StitchedSequenceDataset from /home/dell/datasets/d3il/avoid_m1/train.npz
+dataset_train=547
+[2026-02-26 15:16:34,557][agent.pretrain.train_agent][INFO] - test_in_mujoco==False
+[2026-02-26 15:16:34,557][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_gaussian_mlp_ta4/2026-02-26_15-16-32_42/architecture.log
+[DEBUG] Starting agent.run()...
+[2026-02-26 15:16:34,818][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_gaussian_mlp_ta4/2026-02-26_15-16-32_42/checkpoint/state_1.pt
+
+[2026-02-26 15:16:34,818][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_gaussian_mlp_ta4/2026-02-26_15-16-32_42/result.npz
+
+[2026-02-26 15:16:34,818][agent.pretrain.train_gaussian_agent][INFO] - 1: train loss  25.7634 | entropy:  -0.8836 | t:  0.2608
+[2026-02-26 15:16:34,890][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_gaussian_mlp_ta4/2026-02-26_15-16-32_42/checkpoint/state_2.pt
+
+[2026-02-26 15:16:34,890][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_gaussian_mlp_ta4/2026-02-26_15-16-32_42/result.npz
+
+[2026-02-26 15:16:34,890][agent.pretrain.train_gaussian_agent][INFO] - 2: train loss  17.6542 | entropy:  -0.8836 | t:  0.0717
+[DEBUG] Agent.run() completed.

@@ -1,0 +1,72 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:13:59,150][__main__][INFO] - Set sim_device=0 from cfg.
+[DEBUG] Creating agent class: agent.finetune.reinflow.train_ppo_diffusion_agent.TrainPPODiffusionAgent
+[DEBUG] Initializing agent...
+Making gym environment id=walker2d-medium-v2
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/gym/spaces/box.py:78: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Making gym environment id=walker2d-medium-v2
+Making gym environment id=walker2d-medium-v2
+[2026-02-26 15:14:00,709][root][INFO] - Number of network parameters: 568392
+[2026-02-26 15:14:00,792][root][INFO] - Cloned model for fine-tuning
+[2026-02-26 15:14:00,792][root][INFO] - Turned off gradients of the pretrained network
+[2026-02-26 15:14:00,793][root][INFO] - Number of finetuned parameters: 568392
+[2026-02-26 15:14:01,126][agent.finetune.reinflow.train_ppo_agent][INFO] - learning rate saved to /home/dell/workspace/dmpo/log/gym/finetune/walker2d-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-59_seed42/test_lr_schedulers.png
+[2026-02-26 15:14:01,128][agent.finetune.reinflow.train_ppo_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/finetune/walker2d-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-59_seed42/architecture.log
+[DEBUG] Starting agent.run()...
+[2026-02-26 15:14:01,379][agent.finetune.reinflow.train_ppo_agent][INFO] - 
+################################################################################
+# [1mEvaluation at itr 0[0m                            #
+# Model                                     PPODiffusion #
+# Environment                     walker2d-medium-v2 x 2 #
+# Num denoising steps                                 20 #
+# Seed                                                42 #
+# Success Rate                             0.00% ± 0.00% #
+# Episode Reward                        -3.87 ±     0.43 #
+# Best Reward (per action)               0.49 ±     0.22 #
+# Episode Length                        18.67 ±     3.53 #
+# Actor lr                                      1.00e-04 #
+# Critic lr                                     1.00e-03 #
+################################################################################
+[2026-02-26 15:14:01,379][agent.finetune.reinflow.train_ppo_agent][INFO] - New best reward evaluated: -3.872
+[2026-02-26 15:14:01,380][agent.finetune.reinflow.train_ppo_agent][INFO] - learning rate updated. actor_lr=1.00e-04, critic_lr=1.00e-03
+[2026-02-26 15:14:01,390][agent.finetune.reinflow.train_ppo_agent][INFO] - 
+ Saved model at itr=0 to /home/dell/workspace/dmpo/log/gym/finetune/walker2d-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-59_seed42/checkpoint/state_0.pt
+ 
+[2026-02-26 15:14:01,390][agent.finetune.reinflow.train_ppo_agent][INFO] -  Evaluation results saved to /home/dell/workspace/dmpo/log/gym/finetune/walker2d-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-59_seed42/result.pkl
+ 
+[2026-02-26 15:14:01,394][agent.finetune.reinflow.train_ppo_agent][INFO] - 
+ Saved model with the highest evaluated average episode reward -3.872 to 
+/home/dell/workspace/dmpo/log/gym/finetune/walker2d-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-59_seed42/checkpoint/best.pt
+ 
+[2026-02-26 15:14:01,529][agent.finetune.reinflow.train_ppo_agent][INFO] - 
+################################################################################
+# [1mEvaluation at itr 1[0m                            #
+# Model                                     PPODiffusion #
+# Environment                     walker2d-medium-v2 x 2 #
+# Num denoising steps                                 20 #
+# Seed                                                42 #
+# Success Rate                             0.00% ± 0.00% #
+# Episode Reward                         1.83 ±     2.07 #
+# Best Reward (per action)               0.55 ±     0.18 #
+# Episode Length                        19.00 ±     4.43 #
+# Actor lr                                      1.00e-04 #
+# Critic lr                                     1.00e-03 #
+################################################################################
+[2026-02-26 15:14:01,529][agent.finetune.reinflow.train_ppo_agent][INFO] - New best reward evaluated: 1.832
+[2026-02-26 15:14:01,530][agent.finetune.reinflow.train_ppo_agent][INFO] - learning rate updated. actor_lr=1.00e-04, critic_lr=1.00e-03
+[2026-02-26 15:14:01,539][agent.finetune.reinflow.train_ppo_agent][INFO] - 
+ Saved model at itr=1 to /home/dell/workspace/dmpo/log/gym/finetune/walker2d-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-59_seed42/checkpoint/state_1.pt
+ 
+[2026-02-26 15:14:01,539][agent.finetune.reinflow.train_ppo_agent][INFO] -  Evaluation results saved to /home/dell/workspace/dmpo/log/gym/finetune/walker2d-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-59_seed42/result.pkl
+ 
+[2026-02-26 15:14:01,544][agent.finetune.reinflow.train_ppo_agent][INFO] - 
+ Saved model with the highest evaluated average episode reward 1.832 to 
+/home/dell/workspace/dmpo/log/gym/finetune/walker2d-medium-v2_ppo_diffusion_mlp_ta4_td20_tdf10_seed42/2026-02-26_15-13-59_seed42/checkpoint/best.pt
+ 
+[DEBUG] Agent.run() completed.

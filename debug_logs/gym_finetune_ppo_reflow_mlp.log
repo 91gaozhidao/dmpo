@@ -1,0 +1,57 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:13:37,924][__main__][INFO] - Set sim_device=0 from cfg.
+[DEBUG] Creating agent class: agent.finetune.reinflow.train_ppo_flow_agent.TrainPPOFlowAgent
+[DEBUG] Initializing agent...
+Making gym environment id=hopper-medium-v2
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/gym/spaces/box.py:78: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Making gym environment id=hopper-medium-v2
+Making gym environment id=hopper-medium-v2
+[2026-02-26 15:13:39,477][model.flow.ft_ppo.ppoflow][INFO] - loading policy from None
+[2026-02-26 15:13:39,477][root][WARNING] - No actor policy path provided. Not loading any actor policy. Start from randomly initialized policy.
+[2026-02-26 15:13:39,668][root][INFO] - Cloned policy for fine-tuning
+[2026-02-26 15:13:39,668][root][INFO] - Number of network parameters: Total: 1.247687 M. Actor:0.55302 M. Actor (finetune) : 0.559754 M. Critic: 0.134913 M
+[2026-02-26 15:13:39,874][agent.finetune.reinflow.train_ppo_agent][INFO] - learning rate saved to /home/dell/workspace/dmpo/log/gym/finetune/hopper-medium-v2_ppo_reflow_mlp_ta4_td4_tdf4/2026-02-26_15-13-37_seed42/test_lr_schedulers.png
+[2026-02-26 15:13:39,878][agent.finetune.reinflow.train_ppo_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/finetune/hopper-medium-v2_ppo_reflow_mlp_ta4_td4_tdf4/2026-02-26_15-13-37_seed42/architecture.log
+[2026-02-26 15:13:39,960][agent.finetune.reinflow.train_ppo_flow_agent][INFO] - Exploration noise level bounds saved to /home/dell/workspace/dmpo/log/gym/finetune/hopper-medium-v2_ppo_reflow_mlp_ta4_td4_tdf4/2026-02-26_15-13-37_seed42/explore_noise.png
+[DEBUG] Starting agent.run()...
+Error executing job with overrides: ['++wandb=null', '++device=cuda:0', '++sim_device=cuda:0', '++train.n_train_itr=2', '++train.n_steps=10', '++train.n_critic_warmup_itr=0', '++train.save_model_freq=1', '++train.val_freq=1', '++env.n_envs=2', '++env.save_video=false', '++base_policy_path=null', '++train.batch_size=20']
+Traceback (most recent call last):
+  File "/home/dell/workspace/dmpo/script/run.py", line 182, in <module>
+    main()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+    raise ex
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 132, in run
+    _ = ret.return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 260, in return_value
+    raise self._return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/dell/workspace/dmpo/script/run.py", line 177, in main
+    agent.run()
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_flow_agent.py", line 164, in run
+    self.reset_env() # for gpu version, add device=self.device
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_agent.py", line 324, in reset_env
+    self.prev_obs_venv = self.reset_env_all(options_venv=self.options_venv)
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_agent.py", line 189, in reset_env_all
+    obs_venv = self.venv.reset_arg(options_list=options_venv)
+  File "/home/dell/workspace/dmpo/env/gym_utils/async_vector_env.py", line 724, in reset_arg
+    results = self.call_sync_arg("reset", "options", options_list)
+  File "/home/dell/workspace/dmpo/env/gym_utils/async_vector_env.py", line 712, in call_sync_arg
+    raise RuntimeError(f"{num_errors} worker(s) failed during {method_name}")
+RuntimeError: 2 worker(s) failed during reset

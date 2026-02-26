@@ -1,0 +1,37 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:16:29,499][__main__][INFO] - No EGL device specified in cfg, falling back to osmesa.
+[DEBUG] Creating agent class: agent.pretrain.train_diffusion_agent.TrainDiffusionAgent
+[DEBUG] Initializing agent...
+[2026-02-26 15:16:31,063][root][INFO] - Number of network parameters: 545336
+[2026-02-26 15:16:31,146][agent.pretrain.train_diffusion_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_diffusion_mlp_ta4_td20/2026-02-26_15-16-29_42/architecture.log
+max_n_episodes=-1
+[2026-02-26 15:16:31,149][agent.dataset.sequence][INFO] - max_n_episodes specified as -1, fall back to maximum value 8
+[2026-02-26 15:16:31,149][agent.dataset.sequence][INFO] - Successfully loaded dataset from /home/dell/datasets/d3il/avoid_m1/train.npz
+[2026-02-26 15:16:31,149][agent.dataset.sequence][INFO] - Number of episodes: 8
+[2026-02-26 15:16:31,149][agent.dataset.sequence][INFO] - States shape/type: (torch.Size([571, 4]), torch.float32)
+[2026-02-26 15:16:31,150][agent.dataset.sequence][INFO] - Actions shape/type: (torch.Size([571, 2]), torch.float32)
+[2026-02-26 15:16:31,150][agent.dataset.sequence][INFO] - Finished creating StitchedSequenceDataset from /home/dell/datasets/d3il/avoid_m1/train.npz
+dataset_train=547
+[2026-02-26 15:16:31,151][agent.pretrain.train_agent][INFO] - test_in_mujoco==False
+[2026-02-26 15:16:31,151][agent.pretrain.train_diffusion_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_diffusion_mlp_ta4_td20/2026-02-26_15-16-29_42/architecture.log
+[2026-02-26 15:16:31,307][agent.pretrain.train_diffusion_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_diffusion_mlp_ta4_td20/2026-02-26_15-16-29_42/architecture.log
+[DEBUG] Starting agent.run()...
+dataloader_train=34
+[2026-02-26 15:16:31,307][agent.pretrain.train_agent][INFO] - self.epoch=1, begin training.
+  0%|          | 0/2 [00:00<?, ?it/s][2026-02-26 15:16:31,521][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_diffusion_mlp_ta4_td20/2026-02-26_15-16-29_42/checkpoint/state_1.pt
+
+[2026-02-26 15:16:31,521][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_diffusion_mlp_ta4_td20/2026-02-26_15-16-29_42/result.npz
+
+[2026-02-26 15:16:31,521][agent.pretrain.train_agent][INFO] - epoch=0 , self.first_epoch=0, last epoch=2, loss_train=1.0600
+ 50%|█████     | 1/2 [00:00<00:00,  4.69it/s][2026-02-26 15:16:31,604][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_diffusion_mlp_ta4_td20/2026-02-26_15-16-29_42/checkpoint/state_2.pt
+
+[2026-02-26 15:16:31,605][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/d3il-pretrain/avoid_m1_pre_diffusion_mlp_ta4_td20/2026-02-26_15-16-29_42/result.npz
+
+[2026-02-26 15:16:31,605][agent.pretrain.train_agent][INFO] - epoch=1 , self.first_epoch=0, last epoch=2, loss_train=0.8181
+100%|██████████| 2/2 [00:00<00:00,  6.74it/s]
+[DEBUG] Agent.run() completed.

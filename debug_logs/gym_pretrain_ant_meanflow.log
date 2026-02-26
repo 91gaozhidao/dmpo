@@ -1,0 +1,38 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:13:19,875][__main__][INFO] - No EGL device specified in cfg, falling back to osmesa.
+[DEBUG] Creating agent class: agent.pretrain.train_meanflow_agent.TrainMeanFlowAgent
+[DEBUG] Initializing agent...
+[2026-02-26 15:13:21,395][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/ant-medium-expert-v2_pre_meanflow_mlp_ta4/2026-02-26_15-13-19_42/architecture.log
+max_n_episodes=2
+[2026-02-26 15:13:22,506][agent.dataset.sequence][INFO] - Successfully loaded dataset from /home/dell/datasets/gym/ant-medium-expert-v2/train.npz
+[2026-02-26 15:13:22,507][agent.dataset.sequence][INFO] - Number of episodes: 2
+[2026-02-26 15:13:22,507][agent.dataset.sequence][INFO] - States shape/type: (torch.Size([2000, 111]), torch.float32)
+[2026-02-26 15:13:22,507][agent.dataset.sequence][INFO] - Actions shape/type: (torch.Size([2000, 8]), torch.float32)
+[2026-02-26 15:13:22,507][agent.dataset.sequence][INFO] - Finished creating StitchedSequenceDataset from /home/dell/datasets/gym/ant-medium-expert-v2/train.npz
+dataset_train=1994
+[2026-02-26 15:13:22,508][agent.pretrain.train_agent][INFO] - test_in_mujoco==False
+[2026-02-26 15:13:22,508][agent.pretrain.train_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/ant-medium-expert-v2_pre_meanflow_mlp_ta4/2026-02-26_15-13-19_42/architecture.log
+[DEBUG] Starting agent.run()...
+dataloader_train=498
+[2026-02-26 15:13:22,508][agent.pretrain.train_agent][INFO] - self.epoch=1, begin training.
+  0%|          | 0/2 [00:00<?, ?it/s]/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/torch/autograd/graph.py:865: UserWarning: Attempting to run cuBLAS, but there was no current CUDA context! Attempting to set the primary context... (Triggered internally at /pytorch/aten/src/ATen/cuda/CublasHandlePool.cpp:330.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[2026-02-26 15:13:24,464][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/gym/pretrain/ant-medium-expert-v2_pre_meanflow_mlp_ta4/2026-02-26_15-13-19_42/checkpoint/state_1.pt
+
+[2026-02-26 15:13:24,464][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/gym/pretrain/ant-medium-expert-v2_pre_meanflow_mlp_ta4/2026-02-26_15-13-19_42/result.npz
+
+[2026-02-26 15:13:24,464][agent.pretrain.train_agent][INFO] - 1: train loss   0.8638 | t:  1.9559
+[2026-02-26 15:13:24,464][agent.pretrain.train_agent][INFO] - epoch=0 , self.first_epoch=0, last epoch=2, loss_train=0.8638
+ 50%|█████     | 1/2 [00:01<00:01,  1.96s/it][2026-02-26 15:13:26,301][agent.pretrain.train_agent][INFO] - Saved model to /home/dell/workspace/dmpo/log/gym/pretrain/ant-medium-expert-v2_pre_meanflow_mlp_ta4/2026-02-26_15-13-19_42/checkpoint/state_2.pt
+
+[2026-02-26 15:13:26,301][agent.pretrain.train_agent][INFO] - Evaluation results saved to /home/dell/workspace/dmpo/log/gym/pretrain/ant-medium-expert-v2_pre_meanflow_mlp_ta4/2026-02-26_15-13-19_42/result.npz
+
+[2026-02-26 15:13:26,301][agent.pretrain.train_agent][INFO] - 2: train loss   0.6345 | t:  1.8365
+[2026-02-26 15:13:26,301][agent.pretrain.train_agent][INFO] - epoch=1 , self.first_epoch=0, last epoch=2, loss_train=0.6345
+100%|██████████| 2/2 [00:03<00:00,  1.89s/it]100%|██████████| 2/2 [00:03<00:00,  1.90s/it]
+[DEBUG] Agent.run() completed.

@@ -1,0 +1,53 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:13:34,510][__main__][INFO] - Set sim_device=0 from cfg.
+[DEBUG] Creating agent class: agent.finetune.reinflow.train_ppo_meanflow_agent.TrainPPOMeanFlowAgent
+[DEBUG] Initializing agent...
+Making gym environment id=hopper-medium-v2
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/gym/spaces/box.py:78: UserWarning: [33mWARN: Box bound precision lowered by casting to float32[0m
+  logger.warn(f"Box bound precision lowered by casting to {self.dtype}")
+Making gym environment id=hopper-medium-v2
+Making gym environment id=hopper-medium-v2
+[2026-02-26 15:13:36,062][model.flow.ft_ppo.ppoflow][INFO] - loading policy from None
+[2026-02-26 15:13:36,062][root][WARNING] - No actor policy path provided. Not loading any actor policy. Start from randomly initialized policy.
+[2026-02-26 15:13:36,241][root][INFO] - Cloned policy for fine-tuning
+[2026-02-26 15:13:36,241][root][INFO] - Number of network parameters: Total: 1.415479 M. Actor:0.566652 M. Actor (finetune) : 0.713914 M. Critic: 0.134913 M
+[2026-02-26 15:13:36,465][agent.finetune.reinflow.train_ppo_agent][INFO] - learning rate saved to /home/dell/workspace/dmpo/log/gym/finetune/hopper-medium-v2_ppo_meanflow_mlp_ta4_td5_tdf5/2026-02-26_15-13-34_seed42/test_lr_schedulers.png
+[2026-02-26 15:13:36,476][agent.finetune.reinflow.train_ppo_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/finetune/hopper-medium-v2_ppo_meanflow_mlp_ta4_td5_tdf5/2026-02-26_15-13-34_seed42/architecture.log
+[2026-02-26 15:13:36,477][agent.finetune.reinflow.train_ppo_shortcut_agent][INFO] - Received self.model.noise_scheduler_type=learn, will use constant noise ranges [0.05, 0.12]
+[2026-02-26 15:13:36,576][agent.finetune.reinflow.train_ppo_shortcut_agent][INFO] - Exploration noise level bounds saved to /home/dell/workspace/dmpo/log/gym/finetune/hopper-medium-v2_ppo_meanflow_mlp_ta4_td5_tdf5/2026-02-26_15-13-34_seed42/explore_noise.png
+[2026-02-26 15:13:36,576][agent.finetune.reinflow.train_ppo_meanflow_agent][INFO] - Initialized MeanFlow PPO training agent with low-dim observations
+[DEBUG] Starting agent.run()...
+[2026-02-26 15:13:36,576][agent.finetune.reinflow.train_ppo_meanflow_agent][INFO] - Starting MeanFlow PPO fine-tuning training loop
+MeanFlow Training Iterations:   0%|          | 0/2 [00:00<?, ?itr/s]Error executing job with overrides: ['++wandb=null', '++device=cuda:0', '++sim_device=cuda:0', '++train.n_train_itr=2', '++train.n_steps=10', '++train.n_critic_warmup_itr=0', '++train.save_model_freq=1', '++train.val_freq=1', '++env.n_envs=2', '++env.save_video=false', '++base_policy_path=null', '++train.batch_size=20']
+Traceback (most recent call last):
+  File "/home/dell/workspace/dmpo/script/run.py", line 182, in <module>
+    main()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/main.py", line 94, in decorated_main
+    _run_hydra(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 394, in _run_hydra
+    _run_app(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 457, in _run_app
+    run_and_report(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 223, in run_and_report
+    raise ex
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 220, in run_and_report
+    return func()
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/utils.py", line 458, in <lambda>
+    lambda: hydra.run(
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/_internal/hydra.py", line 132, in run
+    _ = ret.return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 260, in return_value
+    raise self._return_value
+  File "/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/hydra/core/utils.py", line 186, in run_job
+    ret.return_value = task_function(task_cfg)
+  File "/home/dell/workspace/dmpo/script/run.py", line 177, in main
+    agent.run()
+  File "/home/dell/workspace/dmpo/agent/finetune/reinflow/train_ppo_meanflow_agent.py", line 193, in run
+    self.reset_env(buffer_device=self.buffer_device)
+AttributeError: 'TrainPPOMeanFlowAgent' object has no attribute 'buffer_device'
+MeanFlow Training Iterations:   0%|          | 0/2 [00:00<?, ?itr/s]

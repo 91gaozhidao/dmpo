@@ -1,0 +1,113 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:15:52,312][__main__][INFO] - Set sim_device=0 from cfg.
+[DEBUG] Creating agent class: agent.finetune.reinflow.train_ppo_meanflow_img_agent.TrainPPOImgMeanFlowAgent
+[DEBUG] Initializing agent...
+Robomimic env_meta={'env_name': 'Lift', 'env_version': '1.4.1', 'type': 1, 'env_kwargs': {'has_renderer': False, 'has_offscreen_renderer': True, 'ignore_done': True, 'use_object_obs': True, 'use_camera_obs': True, 'control_freq': 20, 'controller_configs': {'type': 'OSC_POSE', 'input_max': 1, 'input_min': -1, 'output_max': [0.05, 0.05, 0.05, 0.5, 0.5, 0.5], 'output_min': [-0.05, -0.05, -0.05, -0.5, -0.5, -0.5], 'kp': 150, 'damping': 1, 'impedance_mode': 'fixed', 'kp_limits': [0, 300], 'damping_limits': [0, 10], 'position_limits': None, 'orientation_limits': None, 'uncouple_pos_ori': True, 'control_delta': True, 'interpolation': None, 'ramp_ratio': 0.2}, 'robots': ['Panda'], 'camera_depths': False, 'camera_heights': 96, 'camera_widths': 96, 'reward_shaping': False, 'camera_names': ['robot0_eye_in_hand'], 'render_gpu_device_id': 0}, 'reward_shaping': False}
+Robomimic env_name=Lift
+[robosuite WARNING] No private macro file found! (macros.py:53)
+[2026-02-26 15:15:53,803][robosuite_logs][WARNING] - No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+[2026-02-26 15:15:53,803][robosuite_logs][WARNING] - It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+[2026-02-26 15:15:53,803][robosuite_logs][WARNING] - To setup, run: python /home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/robosuite/scripts/setup_macros.py
+Robomimic env_meta={'env_name': 'Lift', 'env_version': '1.4.1', 'type': 1, 'env_kwargs': {'has_renderer': False, 'has_offscreen_renderer': True, 'ignore_done': True, 'use_object_obs': True, 'use_camera_obs': True, 'control_freq': 20, 'controller_configs': {'type': 'OSC_POSE', 'input_max': 1, 'input_min': -1, 'output_max': [0.05, 0.05, 0.05, 0.5, 0.5, 0.5], 'output_min': [-0.05, -0.05, -0.05, -0.5, -0.5, -0.5], 'kp': 150, 'damping': 1, 'impedance_mode': 'fixed', 'kp_limits': [0, 300], 'damping_limits': [0, 10], 'position_limits': None, 'orientation_limits': None, 'uncouple_pos_ori': True, 'control_delta': True, 'interpolation': None, 'ramp_ratio': 0.2}, 'robots': ['Panda'], 'camera_depths': False, 'camera_heights': 96, 'camera_widths': 96, 'reward_shaping': False, 'camera_names': ['robot0_eye_in_hand'], 'render_gpu_device_id': 0}, 'reward_shaping': False}
+Robomimic env_name=Lift
+[robosuite WARNING] No private macro file found! (macros.py:53)
+[2026-02-26 15:15:53,808][robosuite_logs][WARNING] - No private macro file found!
+[robosuite WARNING] It is recommended to use a private macro file (macros.py:54)
+[2026-02-26 15:15:53,808][robosuite_logs][WARNING] - It is recommended to use a private macro file
+[robosuite WARNING] To setup, run: python /home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/robosuite/scripts/setup_macros.py (macros.py:55)
+[2026-02-26 15:15:53,808][robosuite_logs][WARNING] - To setup, run: python /home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/robosuite/scripts/setup_macros.py
+[2026-02-26 15:15:53,811][OpenGL.acceleratesupport][INFO] - No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+[2026-02-26 15:15:53,817][OpenGL.acceleratesupport][INFO] - No OpenGL_accelerate module loaded: No module named 'OpenGL_accelerate'
+[2026-02-26 15:15:56,493][root][INFO] - Device 0 is available for rendering
+[2026-02-26 15:15:56,527][root][INFO] - Command '['/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/egl_probe/build/test_device', '1']' returned non-zero exit status 1.
+[2026-02-26 15:15:56,527][root][INFO] - Device 1 is not available for rendering
+Created environment with name Lift
+Action size is 7
+[2026-02-26 15:15:57,293][root][INFO] - Device 0 is available for rendering
+[2026-02-26 15:15:57,327][root][INFO] - Command '['/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/egl_probe/build/test_device', '1']' returned non-zero exit status 1.
+[2026-02-26 15:15:57,327][root][INFO] - Device 1 is not available for rendering
+Created environment with name Lift
+Action size is 7
+[2026-02-26 15:15:57,836][model.flow.ft_ppo.ppoflow][INFO] - loading policy from None
+[2026-02-26 15:15:57,837][root][WARNING] - No actor policy path provided. Not loading any actor policy. Start from randomly initialized policy.
+[2026-02-26 15:15:58,023][root][INFO] - Cloned policy for fine-tuning
+[2026-02-26 15:15:58,024][root][INFO] - Number of network parameters: Total: 4.517575 M. Actor:1.776636 M. Actor (finetune) : 2.154058 M. Critic: 0.586881 M
+[2026-02-26 15:15:58,228][agent.finetune.reinflow.train_ppo_agent][INFO] - learning rate saved to /home/dell/workspace/dmpo/log/robomimic/finetune/lift_ft_meanflow_mlp_img_ta4_td5_tdf5/2026-02-26_15-15-52_42/test_lr_schedulers.png
+[2026-02-26 15:15:58,233][agent.finetune.reinflow.train_ppo_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/robomimic/finetune/lift_ft_meanflow_mlp_img_ta4_td5_tdf5/2026-02-26_15-15-52_42/architecture.log
+[2026-02-26 15:15:58,233][agent.finetune.reinflow.train_ppo_shortcut_agent][INFO] - Received self.model.noise_scheduler_type=learn, will use constant noise ranges [0.05, 0.12]
+[2026-02-26 15:15:58,309][agent.finetune.reinflow.train_ppo_shortcut_agent][INFO] - Exploration noise level bounds saved to /home/dell/workspace/dmpo/log/robomimic/finetune/lift_ft_meanflow_mlp_img_ta4_td5_tdf5/2026-02-26_15-15-52_42/explore_noise.png
+[2026-02-26 15:15:58,309][agent.finetune.reinflow.train_ppo_meanflow_img_agent][INFO] - Initialized MeanFlow PPO training agent with image observations
+[DEBUG] Starting agent.run()...
+[2026-02-26 15:15:58,309][agent.finetune.reinflow.train_ppo_meanflow_img_agent][INFO] - Starting MeanFlow PPO fine-tuning training loop
+[2026-02-26 15:15:58,309][agent.finetune.reinflow.train_ppo_shortcut_img_agent][INFO] - self.buffer_device=cuda:0
+[2026-02-26 15:15:58,311][agent.finetune.reinflow.train_ppo_shortcut_img_agent][INFO] - created buffer: <class 'agent.finetune.reinflow.buffer.PPOFlowImgBufferGPU'> on cuda:0
+MeanFlow Training Iterations:   0%|          | 0/2 [00:00<?, ?itr/s]MeanFlow processed 0 of 10
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/contextlib.py:103: FutureWarning: `torch.backends.cuda.sdp_kernel()` is deprecated. In the future, this context manager will be removed. Please see `torch.nn.attention.sdpa_kernel()` for the new context manager, with updated signature.
+  self.gen = func(*args, **kwds)
+[2026-02-26 15:15:58,892][agent.finetune.reinflow.buffer][INFO] - [WARNING] No episode completed within the iteration!
+[2026-02-26 15:15:58,893][agent.finetune.reinflow.train_ppo_agent][INFO] - 
+################################################################################
+# [1mEvaluation at itr 0[0m                     #
+# Model                               PPOMeanFlow #
+# Environment                            lift x 2 #
+# Num denoising steps                           5 #
+# Seed                                         42 #
+# Success Rate                      0.00% ± 0.00% #
+# Episode Reward                  0.00 ±     0.00 #
+# Best Reward (per action)        0.00 ±     0.00 #
+# Episode Length                  0.00 ±     0.00 #
+# Actor lr                               3.00e-06 #
+# Critic lr                              3.12e-04 #
+################################################################################
+[2026-02-26 15:15:58,893][agent.finetune.reinflow.train_ppo_agent][INFO] - New best reward evaluated: 0.000
+[2026-02-26 15:15:58,893][agent.finetune.reinflow.train_ppo_agent][INFO] - learning rate updated. actor_lr=3.00e-06, critic_lr=3.18e-04
+[2026-02-26 15:15:58,893][agent.finetune.reinflow.train_ppo_agent][INFO] - BC loss coefficient updated: 0.0500 (init=0.0500, final=0.0500)
+[2026-02-26 15:15:58,956][agent.finetune.reinflow.train_ppo_shortcut_agent][INFO] - 
+ Saved model at itr=0 to /home/dell/workspace/dmpo/log/robomimic/finetune/lift_ft_meanflow_mlp_img_ta4_td5_tdf5/2026-02-26_15-15-52_42/checkpoint/state_0.pt
+ 
+[2026-02-26 15:15:58,956][agent.finetune.reinflow.train_ppo_shortcut_agent][INFO] -  Evaluation results saved to /home/dell/workspace/dmpo/log/robomimic/finetune/lift_ft_meanflow_mlp_img_ta4_td5_tdf5/2026-02-26_15-15-52_42/result.pkl
+ 
+[2026-02-26 15:15:58,974][agent.finetune.reinflow.train_ppo_shortcut_agent][INFO] - 
+ Saved model with the highest evaluated average episode reward 0.000 to 
+/home/dell/workspace/dmpo/log/robomimic/finetune/lift_ft_meanflow_mlp_img_ta4_td5_tdf5/2026-02-26_15-15-52_42/checkpoint/best.pt
+ 
+MeanFlow Training Iterations:   0%|          | 0/2 [00:00<?, ?itr/s, mode=Eval, reward=0.00, success=0.0%]MeanFlow Training Iterations:  50%|#####     | 1/2 [00:00<00:00,  1.51itr/s, mode=Eval, reward=0.00, success=0.0%][2026-02-26 15:15:58,975][agent.finetune.reinflow.train_agent][INFO] - clearing cache...
+[2026-02-26 15:15:59,086][agent.finetune.reinflow.train_agent][INFO] - CPU Memory Used: 21.49 GB
+[2026-02-26 15:15:59,086][agent.finetune.reinflow.train_agent][INFO] - GPU Memory Allocated: 0.03 GB
+[2026-02-26 15:15:59,087][agent.finetune.reinflow.train_agent][INFO] - GPU Memory Cached:    0.03  GB
+MeanFlow processed 0 of 10
+[2026-02-26 15:15:59,428][agent.finetune.reinflow.buffer][INFO] - [WARNING] No episode completed within the iteration!
+[2026-02-26 15:15:59,428][agent.finetune.reinflow.train_ppo_agent][INFO] - 
+################################################################################
+# [1mEvaluation at itr 1[0m                     #
+# Model                               PPOMeanFlow #
+# Environment                            lift x 2 #
+# Num denoising steps                           5 #
+# Seed                                         42 #
+# Success Rate                      0.00% ± 0.00% #
+# Episode Reward                  0.00 ±     0.00 #
+# Best Reward (per action)        0.00 ±     0.00 #
+# Episode Length                  0.00 ±     0.00 #
+# Actor lr                               3.00e-06 #
+# Critic lr                              3.18e-04 #
+################################################################################
+[2026-02-26 15:15:59,443][agent.finetune.reinflow.train_ppo_agent][INFO] - learning rate updated. actor_lr=3.00e-06, critic_lr=3.24e-04
+[2026-02-26 15:16:00,456][agent.finetune.reinflow.train_ppo_shortcut_agent][INFO] - 
+ Saved model at itr=1 to /home/dell/workspace/dmpo/log/robomimic/finetune/lift_ft_meanflow_mlp_img_ta4_td5_tdf5/2026-02-26_15-15-52_42/checkpoint/state_1.pt
+ 
+[2026-02-26 15:16:00,456][agent.finetune.reinflow.train_ppo_shortcut_agent][INFO] -  Evaluation results saved to /home/dell/workspace/dmpo/log/robomimic/finetune/lift_ft_meanflow_mlp_img_ta4_td5_tdf5/2026-02-26_15-15-52_42/result.pkl
+ 
+MeanFlow Training Iterations:  50%|#####     | 1/2 [00:02<00:00,  1.51itr/s, mode=Eval, reward=0.00, success=0.0%]MeanFlow Training Iterations: 100%|##########| 2/2 [00:02<00:00,  1.14s/itr, mode=Eval, reward=0.00, success=0.0%][2026-02-26 15:16:00,456][agent.finetune.reinflow.train_agent][INFO] - clearing cache...
+[2026-02-26 15:16:00,540][agent.finetune.reinflow.train_agent][INFO] - CPU Memory Used: 21.54 GB
+[2026-02-26 15:16:00,552][agent.finetune.reinflow.train_agent][INFO] - GPU Memory Allocated: 0.03 GB
+[2026-02-26 15:16:00,552][agent.finetune.reinflow.train_agent][INFO] - GPU Memory Cached:    0.03  GB
+MeanFlow Training Iterations: 100%|##########| 2/2 [00:02<00:00,  1.12s/itr, mode=Eval, reward=0.00, success=0.0%]
+[2026-02-26 15:16:00,552][agent.finetune.reinflow.train_ppo_meanflow_img_agent][INFO] - MeanFlow PPO fine-tuning completed successfully!
+[DEBUG] Agent.run() completed.

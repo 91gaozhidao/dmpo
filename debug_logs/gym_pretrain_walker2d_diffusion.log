@@ -1,0 +1,26 @@
+Gym has been unmaintained since 2022 and does not support NumPy 2.0 amongst other critical functionality.
+Please upgrade to Gymnasium, the maintained drop-in replacement of Gym, or contact the authors of your software and request that they upgrade.
+See the migration guide at https://gymnasium.farama.org/introduction/migration_guide/ for additional information.
+pybullet build time: Jan 29 2025 23:16:28
+/home/dell/miniconda3/envs/dmpo/lib/python3.10/site-packages/pybullet_envs/env_bases.py:8: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import parse_version
+[2026-02-26 15:08:19,782][__main__][INFO] - Set sim_device=0 from cfg.
+[DEBUG] Creating agent class: agent.pretrain.train_diffusion_agent.TrainDiffusionAgent
+[DEBUG] Initializing agent...
+[2026-02-26 15:08:21,298][root][INFO] - Number of network parameters: 568392
+[2026-02-26 15:08:21,385][agent.pretrain.train_diffusion_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/walker2d-medium-v2_pre_diffusion_mlp_ta4_td20_seed42/2026-02-26_15-08-19_42/architecture.log
+max_n_episodes=-1
+[2026-02-26 15:08:21,388][agent.dataset.sequence][INFO] - max_n_episodes specified as -1, fall back to maximum value 1187
+[2026-02-26 15:08:21,885][agent.dataset.sequence][INFO] - Successfully loaded dataset from /home/dell/datasets/gym/walker2d-medium-v2/train.npz
+[2026-02-26 15:08:21,885][agent.dataset.sequence][INFO] - Number of episodes: 1187
+[2026-02-26 15:08:21,885][agent.dataset.sequence][INFO] - States shape/type: (torch.Size([999762, 17]), torch.float32)
+[2026-02-26 15:08:21,885][agent.dataset.sequence][INFO] - Actions shape/type: (torch.Size([999762, 6]), torch.float32)
+[2026-02-26 15:08:21,885][agent.dataset.sequence][INFO] - Finished creating StitchedSequenceDataset from /home/dell/datasets/gym/walker2d-medium-v2/train.npz
+dataset_train=996201
+[2026-02-26 15:08:21,886][agent.pretrain.train_agent][INFO] - test_in_mujoco==False
+[2026-02-26 15:08:21,887][agent.pretrain.train_diffusion_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/walker2d-medium-v2_pre_diffusion_mlp_ta4_td20_seed42/2026-02-26_15-08-19_42/architecture.log
+[2026-02-26 15:08:21,887][agent.pretrain.train_diffusion_agent][INFO] - architecture wrote to file /home/dell/workspace/dmpo/log/gym/pretrain/walker2d-medium-v2_pre_diffusion_mlp_ta4_td20_seed42/2026-02-26_15-08-19_42/architecture.log
+[DEBUG] Starting agent.run()...
+dataloader_train=249050
+[2026-02-26 15:08:21,887][agent.pretrain.train_agent][INFO] - self.epoch=1, begin training.
+  0%|          | 0/2 [00:00<?, ?it/s]
