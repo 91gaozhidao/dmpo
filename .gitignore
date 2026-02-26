@@ -157,6 +157,9 @@ temp/
 *.tmp
 *.bak
 
+# Debug logs
+debug_logs/
+
 # OS
 .DS_Store
 Thumbs.db
