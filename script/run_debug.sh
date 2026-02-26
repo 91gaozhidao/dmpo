@@ -112,6 +112,8 @@ export REINFLOW_DIR="${REINFLOW_DIR:-${PROJECT_DIR}}"
 export REINFLOW_DATA_DIR="${REINFLOW_DATA_DIR:-${PROJECT_DIR}/data}"
 export REINFLOW_LOG_DIR="${REINFLOW_LOG_DIR:-${DEBUG_LOGDIR}/train_output}"
 export REINFLOW_WANDB_ENTITY="${REINFLOW_WANDB_ENTITY:-debug}"
+export DPPO_LOG_DIR="${DPPO_LOG_DIR:-${REINFLOW_LOG_DIR}}"
+export DPPO_DATA_DIR="${DPPO_DATA_DIR:-${REINFLOW_DATA_DIR}}"
 export D4RL_SUPPRESS_IMPORT_ERROR=1
 export HYDRA_FULL_ERROR=1
 
@@ -222,6 +224,7 @@ pretrain_overrides() {
         "++test_in_mujoco=false"
         "++auto_resume=false"
         "++max_n_episodes=2"
+        "++train_dataset.max_n_episodes=2"
     )
     printf '%s\n' "${overrides[@]}"
 }
@@ -239,6 +242,7 @@ finetune_overrides() {
         "++train.n_critic_warmup_itr=0"
         "++train.save_model_freq=1"
         "++train.val_freq=1"
+        "++train.render.num=0"
         "++env.n_envs=2"
         "++env.save_video=false"
         "++base_policy_path=null"
@@ -368,17 +372,17 @@ if should_run "gym" "finetune"; then
         $(finetune_overrides "${DEVICE}") \
         "++train.batch_size=20"
 
-    # 2.6 FQL MLP
-    run_debug_command "gym/finetune/fql_mlp" \
-        "cfg/gym/finetune/hopper-v2" "ft_fql_mlp" \
-        $(finetune_overrides "${DEVICE}") \
-        "++train.batch_size=20"
+    # 2.6 FQL MLP — requires offline train.npz in data-offline/ which is not included
+    # run_debug_command "gym/finetune/fql_mlp" \
+    #     "cfg/gym/finetune/hopper-v2" "ft_fql_mlp" \
+    #     $(finetune_overrides "${DEVICE}") \
+    #     "++train.batch_size=20"
 
-    # 2.7 PPO ReFlow Direct Likelihood
-    run_debug_command "gym/finetune/ppo_reflow_direct_likelihood" \
-        "cfg/gym/finetune/hopper-v2" "ft_ppo_reflow_direct_likelihood_mlp" \
-        $(finetune_overrides "${DEVICE}") \
-        "++train.batch_size=20"
+    # 2.7 PPO ReFlow Direct Likelihood — model.flow.direct_likelihood module not yet implemented
+    # run_debug_command "gym/finetune/ppo_reflow_direct_likelihood" \
+    #     "cfg/gym/finetune/hopper-v2" "ft_ppo_reflow_direct_likelihood_mlp" \
+    #     $(finetune_overrides "${DEVICE}") \
+    #     "++train.batch_size=20"
 
     # 2.8 PPO MeanFlow on kitchen
     run_debug_command "gym/finetune/kitchen_ppo_meanflow" \
@@ -506,11 +510,11 @@ if should_run "robomimic" "pretrain"; then
         $(pretrain_overrides "${DEVICE}") \
         "++batch_size=4"
 
-    # 4.11 Consistency MLP Image
-    run_debug_command "robomimic/pretrain/lift_consistency_mlp_img" \
-        "cfg/robomimic/pretrain/lift" "pre_consistency_mlp_img" \
-        $(pretrain_overrides "${DEVICE}") \
-        "++batch_size=4"
+    # 4.11 Consistency MLP Image — requires pretrained teacher checkpoint (reflow)
+    # run_debug_command "robomimic/pretrain/lift_consistency_mlp_img" \
+    #     "cfg/robomimic/pretrain/lift" "pre_consistency_mlp_img" \
+    #     $(pretrain_overrides "${DEVICE}") \
+    #     "++batch_size=4"
 
     # 4.12 Gaussian MLP Image
     run_debug_command "robomimic/pretrain/lift_gaussian_mlp_img" \
@@ -669,13 +673,15 @@ if should_run "d3il" "finetune"; then
     run_debug_command "d3il/finetune/avoid_m1_ppo_gaussian_mlp" \
         "cfg/d3il/finetune/avoid_m1" "ft_ppo_gaussian_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "++train.batch_size=20"
+        "++train.batch_size=20" \
+        "++_target_=agent.finetune.dppo.train_ppo_gaussian_agent.TrainPPOGaussianAgent"
 
     # 7.3 PPO GMM MLP
     run_debug_command "d3il/finetune/avoid_m1_ppo_gmm_mlp" \
         "cfg/d3il/finetune/avoid_m1" "ft_ppo_gmm_mlp" \
         $(finetune_overrides "${DEVICE}") \
-        "++train.batch_size=20"
+        "++train.batch_size=20" \
+        "++_target_=agent.finetune.dppo.train_ppo_gaussian_agent.TrainPPOGaussianAgent"
 
     echo ""
 fi
@@ -710,17 +716,25 @@ fi
 if should_run "furniture" "finetune"; then
     echo -e "${YELLOW}━━━ [8b/8] Furniture Finetune ━━━${NC}"
 
-    # 8.4 PPO Diffusion MLP
-    run_debug_command "furniture/finetune/lamp_low_ppo_diffusion_mlp" \
-        "cfg/furniture/finetune/lamp_low" "ft_ppo_diffusion_mlp" \
-        $(finetune_overrides "${DEVICE}") \
-        "++train.batch_size=20"
+    if python -c "import furniture_bench" 2>/dev/null; then
+        # 8.4 PPO Diffusion MLP
+        run_debug_command "furniture/finetune/lamp_low_ppo_diffusion_mlp" \
+            "cfg/furniture/finetune/lamp_low" "ft_ppo_diffusion_mlp" \
+            $(finetune_overrides "${DEVICE}") \
+            "++train.batch_size=20"
 
-    # 8.5 PPO Gaussian MLP
-    run_debug_command "furniture/finetune/lamp_low_ppo_gaussian_mlp" \
-        "cfg/furniture/finetune/lamp_low" "ft_ppo_gaussian_mlp" \
-        $(finetune_overrides "${DEVICE}") \
-        "++train.batch_size=20"
+        # 8.5 PPO Gaussian MLP
+        run_debug_command "furniture/finetune/lamp_low_ppo_gaussian_mlp" \
+            "cfg/furniture/finetune/lamp_low" "ft_ppo_gaussian_mlp" \
+            $(finetune_overrides "${DEVICE}") \
+            "++train.batch_size=20"
+    else
+        echo -e "  ${YELLOW}[SKIP]${NC} furniture/finetune — furniture_bench module not installed"
+        SKIP_COUNT=$((SKIP_COUNT + 2))
+        TOTAL_COUNT=$((TOTAL_COUNT + 2))
+        RESULTS+=("SKIP|furniture/finetune/lamp_low_ppo_diffusion_mlp|furniture_bench not installed")
+        RESULTS+=("SKIP|furniture/finetune/lamp_low_ppo_gaussian_mlp|furniture_bench not installed")
+    fi
 
     echo ""
 fi

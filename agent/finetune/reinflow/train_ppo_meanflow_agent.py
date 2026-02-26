@@ -45,6 +45,7 @@ class TrainPPOMeanFlowAgent(TrainPPOShortCutAgent):
 
     def __init__(self, cfg):
         super().__init__(cfg)
+        self.buffer_device = 'cpu'
         log.info("Initialized MeanFlow PPO training agent with low-dim observations")
 
         # MeanFlow uses 5 inference steps by default (as per original paper)
