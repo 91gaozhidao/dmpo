@@ -24,7 +24,7 @@
 #   bash script/run_debug.sh --dry-run
 # =============================================================================
 
-set -euo pipefail
+set -uo pipefail
 
 # ========================== Configuration ==========================
 
@@ -68,7 +68,26 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help)
-            head -25 "$0" | tail -20
+            cat <<'HELPEOF'
+DMPO Comprehensive Debug Script
+
+Usage:
+  bash script/run_debug.sh [OPTIONS]
+
+Options:
+  --gpu           Use GPU (cuda:0) instead of CPU (default: cpu)
+  --timeout SEC   Timeout per command in seconds (default: 300)
+  --logdir DIR    Directory for debug logs (default: ./debug_logs)
+  --suite SUITE   Run only a specific suite: gym, robomimic, d3il, furniture
+  --stage STAGE   Run only a specific stage: pretrain, finetune
+  --dry-run       Print commands without executing
+  --help          Show this help message
+
+Example:
+  bash script/run_debug.sh --gpu --timeout 600
+  bash script/run_debug.sh --suite gym --stage pretrain
+  bash script/run_debug.sh --dry-run
+HELPEOF
             exit 0
             ;;
         *)
@@ -190,33 +209,41 @@ run_debug_command() {
 }
 
 # Common debug overrides for pretrain (supervised learning on dataset)
+# Returns overrides as newline-separated values (no spaces in values)
 pretrain_overrides() {
     local device="$1"
-    echo "wandb=null" \
-         "device=${device}" \
-         "train.n_epochs=2" \
-         "train.save_model_freq=1" \
-         "train.lr_scheduler.first_cycle_steps=2" \
-         "train.lr_scheduler.warmup_steps=1" \
-         "test_in_mujoco=false" \
-         "auto_resume=false" \
-         "max_n_episodes=2"
+    local -a overrides=(
+        "wandb=null"
+        "device=${device}"
+        "train.n_epochs=2"
+        "train.save_model_freq=1"
+        "train.lr_scheduler.first_cycle_steps=2"
+        "train.lr_scheduler.warmup_steps=1"
+        "test_in_mujoco=false"
+        "auto_resume=false"
+        "max_n_episodes=2"
+    )
+    printf '%s\n' "${overrides[@]}"
 }
 
 # Common debug overrides for finetune (RL with environment interaction)
+# Returns overrides as newline-separated values (no spaces in values)
 finetune_overrides() {
     local device="$1"
-    echo "wandb=null" \
-         "device=${device}" \
-         "sim_device=${device}" \
-         "train.n_train_itr=2" \
-         "train.n_steps=10" \
-         "train.n_critic_warmup_itr=0" \
-         "train.save_model_freq=1" \
-         "train.val_freq=1" \
-         "env.n_envs=2" \
-         "env.save_video=false" \
-         "base_policy_path=null"
+    local -a overrides=(
+        "wandb=null"
+        "device=${device}"
+        "sim_device=${device}"
+        "train.n_train_itr=2"
+        "train.n_steps=10"
+        "train.n_critic_warmup_itr=0"
+        "train.save_model_freq=1"
+        "train.val_freq=1"
+        "env.n_envs=2"
+        "env.save_video=false"
+        "base_policy_path=null"
+    )
+    printf '%s\n' "${overrides[@]}"
 }
 
 should_run() {
