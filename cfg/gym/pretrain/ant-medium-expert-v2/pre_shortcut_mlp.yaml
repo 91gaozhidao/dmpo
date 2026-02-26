@@ -22,8 +22,8 @@ train_dataset_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env}/train.npz
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env}/normalization.npz
 use_d4rl_dataset: True
 seed: 42
-device: cuda:7
-sim_device: cuda:7
+device: cuda:0
+sim_device: cuda:0
 denoising_steps: 20
 batch_size: 128
 max_n_episodes: -1

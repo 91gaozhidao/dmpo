@@ -12,7 +12,7 @@ base_policy_path:
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env_name}/normalization.npz
 
 seed: 42
-device: cuda:2
+device: cuda:0
 env_name: walker2d-medium-v2
 obs_dim: 17
 action_dim: 6

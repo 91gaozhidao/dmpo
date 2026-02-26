@@ -21,8 +21,8 @@ base_policy_path: ${oc.env:REINFLOW_LOG_DIR}/robomimic/pretrain/transport/ShortC
 robomimic_env_cfg_path: cfg/robomimic/env_meta/${env_name}-img.json
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/robomimic/${env_name}-img/normalization.npz
 seed: 42
-device: cuda:7
-sim_device: cuda:6
+device: cuda:0
+sim_device: cuda:0
 #####################
 denoising_steps: 4
 ft_denoising_steps: 4

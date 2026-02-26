@@ -25,8 +25,8 @@ base_policy_path: ${oc.env:REINFLOW_LOG_DIR}/gym/pretrain/walker2d-medium-v2_pre
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env_name}/normalization.npz
 resume_path: null
 seed: 42
-device: cuda:3
-sim_device: cuda:3
+device: cuda:0
+sim_device: cuda:0
 denoising_steps: 20
 ft_denoising_steps: 10
 

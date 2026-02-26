@@ -21,7 +21,7 @@ logdir: ${oc.env:REINFLOW_LOG_DIR}/gym/finetune/${name}/${now:%Y-%m-%d}_${now:%H
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env_name}/normalization.npz
 offline_dataset_path: ${oc.env:REINFLOW_DATA_DIR}/gym/Humanoid-medium-v3-offline/train.npz
 seed: 42
-device: cuda:3
+device: cuda:0
 
 env:
   n_envs: 1

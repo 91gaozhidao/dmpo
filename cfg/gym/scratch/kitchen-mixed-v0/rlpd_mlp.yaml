@@ -11,7 +11,7 @@ normalization_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env_name}/normalization.np
 offline_dataset_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env_name}/train.npz
 
 seed: 42
-device: cuda:3
+device: cuda:0
 env_name: kitchen-mixed-v0
 obs_dim: 60
 action_dim: 9

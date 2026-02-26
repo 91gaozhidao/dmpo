@@ -23,8 +23,8 @@ resume_path: null
 robomimic_env_cfg_path: cfg/robomimic/env_meta/${env_name}-img.json
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/robomimic/${env_name}-img/normalization.npz
 seed: 42
-device: cuda:1
-sim_device: cuda:1
+device: cuda:0
+sim_device: cuda:0
 ###############################
 denoising_steps: 1
 ft_denoising_steps: 1

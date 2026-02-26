@@ -24,7 +24,7 @@ base_policy_path:
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env_name}/normalization.npz
 
 seed: 42
-device: cuda:2
+device: cuda:0
 
 denoising_steps: 5  # MeanFlow typically uses 5 inference steps
 denoising_step_list: [1, 2, 3, 4, 5]

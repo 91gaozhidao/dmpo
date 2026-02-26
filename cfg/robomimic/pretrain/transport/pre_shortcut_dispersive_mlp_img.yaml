@@ -43,7 +43,7 @@ normalization_path: ${oc.env:REINFLOW_DATA_DIR}/robomimic/${env}-img/normalizati
 denoising_steps: 20 #100   100 causes overflow problem...
 batch_size: 256
 seed: 42
-device: cuda:1
+device: cuda:0
 test_in_mujoco: false
 max_n_episodes: -1
 wandb:

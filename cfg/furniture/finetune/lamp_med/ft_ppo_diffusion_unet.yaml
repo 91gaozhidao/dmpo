@@ -11,7 +11,7 @@ base_policy_path: ${oc.env:REINFLOW_LOG_DIR}/furniture/pretrain/lamp/lamp_med_di
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/furniture/${env.specific.furniture}_${env.specific.randomness}/normalization.pth
 
 seed: 42
-device: cuda:3
+device: cuda:0
 env_name: ${env.specific.furniture}_${env.specific.randomness}_dim
 obs_dim: 44
 action_dim: 10

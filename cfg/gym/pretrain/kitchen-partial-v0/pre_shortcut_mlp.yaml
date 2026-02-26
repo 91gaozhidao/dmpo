@@ -21,7 +21,7 @@ logdir: ${oc.env:REINFLOW_LOG_DIR}/gym/pretrain/${name}/${now:%Y-%m-%d}_${now:%H
 train_dataset_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env}/train.npz
 
 seed: 42
-device: cuda:7
+device: cuda:0
 denoising_steps: 20
 batch_size: 128
 max_n_episodes: -1
