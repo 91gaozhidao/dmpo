@@ -35,8 +35,10 @@ the Gaussian mean, and a learnable log-std parameter provides exploration.
 
 import copy
 import logging
+import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.distributions import Normal
 from model.drifting.drifting import DriftingPolicy
 
@@ -105,11 +107,15 @@ class NoisyDriftingPolicy(nn.Module):
 
     def get_log_prob(self, cond: dict, action):
         """
-        Compute log-probability of actions under the current policy.
+        Compute log-probability of actions under the Tanh-Normal policy.
+
+        Applies inverse tanh (atanh) to recover unbounded actions, then
+        computes Normal log-probability with Jacobian correction:
+            log pi(a) = log N(atanh(a); mu, sigma) - log(1 - a^2 + eps)
 
         Args:
             cond: dict with 'state' key
-            action: (B, Ta, Da) actions
+            action: (B, Ta, Da) actions in (-1, 1)
 
         Returns:
             log_prob: (B,) per-sample log-probability
@@ -117,26 +123,69 @@ class NoisyDriftingPolicy(nn.Module):
         dist, _ = self.get_distribution(cond)
         B = action.shape[0]
         action_flat = action.view(B, -1)  # (B, Ta*Da)
-        log_prob = dist.log_prob(action_flat).sum(dim=-1)  # (B,)
+
+        # Inverse tanh to recover unbounded action
+        action_clipped = torch.clamp(action_flat, -0.999999, 0.999999)
+        u = torch.atanh(action_clipped)
+
+        # Normal log-prob with Jacobian correction for tanh squashing
+        log_prob = dist.log_prob(u)
+        log_prob -= torch.log(1 - action_clipped.pow(2) + 1e-6)
+        log_prob = log_prob.sum(dim=-1)  # (B,)
         return log_prob
 
-    def sample_action(self, cond: dict):
+    def get_action_and_log_prob(self, cond: dict):
         """
-        Sample an action and compute its log-probability.
+        Sample an action via Tanh-Normal and return the corrected log-probability.
+
+        Uses reparameterized sampling (rsample) for gradient flow.
 
         Args:
             cond: dict with 'state' key
 
         Returns:
-            action: (B, Ta, Da) sampled action
-            log_prob: (B,) log-probability of sampled action
+            action: (B, Ta, Da) sampled action in [-1, 1]
+            log_prob: (B,) Jacobian-corrected log-probability
         """
         dist, mean = self.get_distribution(cond)
-        action_flat = dist.sample()  # (B, Ta*Da)
-        log_prob = dist.log_prob(action_flat).sum(dim=-1)  # (B,)
+        u = dist.rsample()  # (B, Ta*Da)
+        action_flat = torch.tanh(u)  # bounded to [-1, 1]
+
+        # Jacobian correction (numerically stable):
+        # log(1 - tanh(u)^2) = 2*(log(2) - u - softplus(-2*u))
+        log_prob = dist.log_prob(u)
+        log_prob -= 2 * (np.log(2) - u - F.softplus(-2 * u))
+        log_prob = log_prob.sum(dim=-1)  # (B,)
+
         B = mean.shape[0]
         action = action_flat.view(B, self.horizon_steps, self.action_dim)
-        action = action.clamp(*self.drifting_policy.act_range)
+        return action, log_prob
+
+    def sample_action(self, cond: dict):
+        """
+        Sample an action via Tanh-Normal for environment interaction.
+
+        Uses non-reparameterized sampling (sample) since this is typically
+        called under torch.no_grad() during trajectory collection.
+
+        Args:
+            cond: dict with 'state' key
+
+        Returns:
+            action: (B, Ta, Da) sampled action in [-1, 1]
+            log_prob: (B,) Jacobian-corrected log-probability
+        """
+        dist, mean = self.get_distribution(cond)
+        u = dist.sample()  # (B, Ta*Da)
+        action_flat = torch.tanh(u)  # bounded to [-1, 1]
+
+        # Jacobian correction (numerically stable)
+        log_prob = dist.log_prob(u)
+        log_prob -= 2 * (np.log(2) - u - F.softplus(-2 * u))
+        log_prob = log_prob.sum(dim=-1)  # (B,)
+
+        B = mean.shape[0]
+        action = action_flat.view(B, self.horizon_steps, self.action_dim)
         return action, log_prob
 
 
@@ -152,7 +201,9 @@ class GRPODrifting(nn.Module):
 
     The GRPO loss is:
         L = -min(ratio * A, clip(ratio, 1-eps, 1+eps) * A) + beta * KL
-    where KL = (pi_ref / pi_theta) - log(pi_ref / pi_theta) - 1
+    where KL is the analytical KL divergence KL(N_curr || N_ref)
+    between the pre-tanh Gaussian distributions of the current and
+    reference policies.
     """
 
     def __init__(self, actor: NoisyDriftingPolicy,
@@ -183,7 +234,10 @@ class GRPODrifting(nn.Module):
 
     def compute_loss(self, obs, actions, advantages, old_log_probs):
         """
-        Compute the Continuous GRPO loss.
+        Compute the Continuous GRPO loss with analytical KL divergence.
+
+        Uses analytical KL(N_curr || N_ref) for the pre-tanh Gaussian
+        distributions, eliminating sampling variance in the KL penalty.
 
         Args:
             obs: dict with 'state' key, (B, To, Do) observations
@@ -195,12 +249,13 @@ class GRPODrifting(nn.Module):
             loss: scalar GRPO loss
             metrics: dict with diagnostic values
         """
-        # Current policy log-probability
+        # Current policy distribution parameters and log-probability
+        current_mean, current_std = self.actor(obs)
         current_log_probs = self.actor.get_log_prob(obs, actions)
 
-        # Reference policy log-probability (for KL penalty)
+        # Reference policy distribution parameters
         with torch.no_grad():
-            ref_log_probs = self.actor_ref.get_log_prob(obs, actions)
+            ref_mean, ref_std = self.actor_ref(obs)
 
         # Policy ratio: pi_theta(a|s) / pi_old(a|s)
         ratio = torch.exp(current_log_probs - old_log_probs)
@@ -212,13 +267,26 @@ class GRPODrifting(nn.Module):
         ) * advantages
         policy_loss = -torch.min(surr1, surr2)
 
-        # KL penalty: approximate KL(pi_ref || pi_theta)
-        # Using the unbiased estimator: (pi_ref/pi_theta) - log(pi_ref/pi_theta) - 1
-        log_ratio_ref = ref_log_probs - current_log_probs
-        kl_div = torch.exp(log_ratio_ref) - log_ratio_ref - 1.0
+        # Analytical KL divergence: KL(N_curr || N_ref)
+        # For diagonal Gaussian distributions with independent dimensions
+        B = current_mean.shape[0]
+        curr_mean_flat = current_mean.view(B, -1)   # (B, Ta*Da)
+        ref_mean_flat = ref_mean.view(B, -1)         # (B, Ta*Da)
+        curr_std_expanded = current_std.expand(B, -1)  # (B, Ta*Da)
+        ref_std_expanded = ref_std.expand(B, -1)       # (B, Ta*Da)
+
+        var_curr = curr_std_expanded.pow(2)
+        var_ref = ref_std_expanded.pow(2)
+
+        kl_div = (
+            torch.log(ref_std_expanded / curr_std_expanded)
+            + (var_curr + (curr_mean_flat - ref_mean_flat).pow(2)) / (2 * var_ref)
+            - 0.5
+        )
+        kl_div_sum = kl_div.sum(dim=-1)  # Sum over action dimensions
 
         # Total GRPO loss
-        loss = (policy_loss + self.beta * kl_div).mean()
+        loss = (policy_loss + self.beta * kl_div_sum).mean()
 
         # Diagnostic metrics
         with torch.no_grad():
@@ -229,7 +297,7 @@ class GRPODrifting(nn.Module):
 
         metrics = {
             "policy_loss": policy_loss.mean().item(),
-            "kl_div": kl_div.mean().item(),
+            "kl_div": kl_div_sum.mean().item(),
             "approx_kl": approx_kl,
             "clipfrac": clipfrac,
             "ratio": ratio.mean().item(),

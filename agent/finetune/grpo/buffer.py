@@ -111,8 +111,8 @@ class GRPOBuffer:
             group_returns = returns[start:end]
 
             mean_r = group_returns.mean()
-            std_r = group_returns.std()
-            if std_r < 1e-8:
+            std_r = group_returns.std(unbiased=False)
+            if std_r < 1e-6:
                 advantages[start:end] = 0.0
             else:
                 advantages[start:end] = (group_returns - mean_r) / (std_r + 1e-8)
@@ -122,8 +122,8 @@ class GRPOBuffer:
         if remainder_start < num_traj:
             remainder_returns = returns[remainder_start:]
             mean_r = remainder_returns.mean()
-            std_r = remainder_returns.std()
-            if std_r < 1e-8:
+            std_r = remainder_returns.std(unbiased=False)
+            if std_r < 1e-6:
                 advantages[remainder_start:] = 0.0
             else:
                 advantages[remainder_start:] = (
