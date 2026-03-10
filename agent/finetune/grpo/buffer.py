@@ -34,6 +34,9 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
+# Threshold below which group returns are considered identical (no preference)
+ADVANTAGE_STD_THRESHOLD = 1e-6
+
 
 class GRPOBuffer:
     """
@@ -112,10 +115,10 @@ class GRPOBuffer:
 
             mean_r = group_returns.mean()
             std_r = group_returns.std(unbiased=False)
-            if std_r < 1e-6:
+            if std_r < ADVANTAGE_STD_THRESHOLD:
                 advantages[start:end] = 0.0
             else:
-                advantages[start:end] = (group_returns - mean_r) / (std_r + 1e-8)
+                advantages[start:end] = (group_returns - mean_r) / (std_r + ADVANTAGE_STD_THRESHOLD)
 
         # Handle remainder (if any)
         remainder_start = num_complete_groups * self.group_size
@@ -123,11 +126,11 @@ class GRPOBuffer:
             remainder_returns = returns[remainder_start:]
             mean_r = remainder_returns.mean()
             std_r = remainder_returns.std(unbiased=False)
-            if std_r < 1e-6:
+            if std_r < ADVANTAGE_STD_THRESHOLD:
                 advantages[remainder_start:] = 0.0
             else:
                 advantages[remainder_start:] = (
-                    (remainder_returns - mean_r) / (std_r + 1e-8)
+                    (remainder_returns - mean_r) / (std_r + ADVANTAGE_STD_THRESHOLD)
                 )
 
         return advantages

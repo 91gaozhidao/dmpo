@@ -44,6 +44,27 @@ from model.drifting.drifting import DriftingPolicy
 
 log = logging.getLogger(__name__)
 
+# Module-level constants for numerical stability
+LOG_2 = np.log(2)
+TANH_CLIP_THRESHOLD = 0.999999
+JACOBIAN_EPS = 1e-6
+
+
+def _tanh_jacobian_correction(u):
+    """
+    Compute the log-determinant of the Jacobian for the tanh squashing.
+
+    Uses the numerically stable formula:
+        log(1 - tanh(u)^2) = 2*(log(2) - u - softplus(-2*u))
+
+    Args:
+        u: (*, D) unbounded pre-tanh actions
+
+    Returns:
+        correction: (*, D) per-dimension Jacobian correction
+    """
+    return 2 * (LOG_2 - u - F.softplus(-2 * u))
+
 
 class NoisyDriftingPolicy(nn.Module):
     """
@@ -125,12 +146,12 @@ class NoisyDriftingPolicy(nn.Module):
         action_flat = action.view(B, -1)  # (B, Ta*Da)
 
         # Inverse tanh to recover unbounded action
-        action_clipped = torch.clamp(action_flat, -0.999999, 0.999999)
+        action_clipped = torch.clamp(action_flat, -TANH_CLIP_THRESHOLD, TANH_CLIP_THRESHOLD)
         u = torch.atanh(action_clipped)
 
         # Normal log-prob with Jacobian correction for tanh squashing
         log_prob = dist.log_prob(u)
-        log_prob -= torch.log(1 - action_clipped.pow(2) + 1e-6)
+        log_prob -= torch.log(1 - action_clipped.pow(2) + JACOBIAN_EPS)
         log_prob = log_prob.sum(dim=-1)  # (B,)
         return log_prob
 
@@ -154,7 +175,7 @@ class NoisyDriftingPolicy(nn.Module):
         # Jacobian correction (numerically stable):
         # log(1 - tanh(u)^2) = 2*(log(2) - u - softplus(-2*u))
         log_prob = dist.log_prob(u)
-        log_prob -= 2 * (np.log(2) - u - F.softplus(-2 * u))
+        log_prob -= _tanh_jacobian_correction(u)
         log_prob = log_prob.sum(dim=-1)  # (B,)
 
         B = mean.shape[0]
@@ -181,7 +202,7 @@ class NoisyDriftingPolicy(nn.Module):
 
         # Jacobian correction (numerically stable)
         log_prob = dist.log_prob(u)
-        log_prob -= 2 * (np.log(2) - u - F.softplus(-2 * u))
+        log_prob -= _tanh_jacobian_correction(u)
         log_prob = log_prob.sum(dim=-1)  # (B,)
 
         B = mean.shape[0]
