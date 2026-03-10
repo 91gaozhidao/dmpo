@@ -255,6 +255,13 @@ class DriftingPolicy(nn.Module):
         action = self.network(z, t, r, cond)
         action = action.clamp(*self.act_range)
 
+        # Runtime assertion: verify action boundaries before env interaction
+        assert action.min() >= self.act_range[0] and action.max() <= self.act_range[1], (
+            f"Action boundary violation after clamp: "
+            f"min={action.min().item():.6f}, max={action.max().item():.6f}, "
+            f"expected range=[{self.act_range[0]}, {self.act_range[1]}]"
+        )
+
         chains = None
         if record_intermediate:
             chains = action.unsqueeze(0)

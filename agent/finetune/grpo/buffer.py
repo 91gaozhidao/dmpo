@@ -116,6 +116,13 @@ class GRPOBuffer:
             mean_r = group_returns.mean()
             std_r = group_returns.std(unbiased=False)
             if std_r < ADVANTAGE_STD_THRESHOLD:
+                # Zero-variance protection: when all returns in a group are
+                # identical (e.g. sparse reward with all-zero returns), set
+                # advantages to zero to prevent division-by-zero errors.
+                log.debug(
+                    f"Group {g}: zero-variance detected (std={std_r:.2e}), "
+                    f"setting advantages to 0.0"
+                )
                 advantages[start:end] = 0.0
             else:
                 advantages[start:end] = (group_returns - mean_r) / (std_r + ADVANTAGE_STD_THRESHOLD)
@@ -127,6 +134,11 @@ class GRPOBuffer:
             mean_r = remainder_returns.mean()
             std_r = remainder_returns.std(unbiased=False)
             if std_r < ADVANTAGE_STD_THRESHOLD:
+                # Zero-variance protection for remainder group
+                log.debug(
+                    f"Remainder group: zero-variance detected (std={std_r:.2e}), "
+                    f"setting advantages to 0.0"
+                )
                 advantages[remainder_start:] = 0.0
             else:
                 advantages[remainder_start:] = (

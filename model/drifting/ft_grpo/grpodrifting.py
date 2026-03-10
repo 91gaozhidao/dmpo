@@ -153,6 +153,14 @@ class NoisyDriftingPolicy(nn.Module):
         log_prob = dist.log_prob(u)
         log_prob -= torch.log(1 - action_clipped.pow(2) + JACOBIAN_EPS)
         log_prob = log_prob.sum(dim=-1)  # (B,)
+
+        # Runtime assertion: verify Jacobian-corrected log-probs are finite
+        assert torch.isfinite(log_prob).all(), (
+            f"Non-finite log-probability after Jacobian correction: "
+            f"NaN count={log_prob.isnan().sum().item()}, "
+            f"Inf count={log_prob.isinf().sum().item()}"
+        )
+
         return log_prob
 
     def get_action_and_log_prob(self, cond: dict):
@@ -270,6 +278,13 @@ class GRPODrifting(nn.Module):
             loss: scalar GRPO loss
             metrics: dict with diagnostic values
         """
+        # Runtime assertion: verify actions are within valid bounds
+        assert torch.isfinite(actions).all(), (
+            f"Non-finite actions detected: "
+            f"NaN count={actions.isnan().sum().item()}, "
+            f"Inf count={actions.isinf().sum().item()}"
+        )
+
         # Current policy distribution parameters and log-probability
         current_mean, current_std = self.actor(obs)
         current_log_probs = self.actor.get_log_prob(obs, actions)
@@ -308,6 +323,13 @@ class GRPODrifting(nn.Module):
 
         # Total GRPO loss
         loss = (policy_loss + self.beta * kl_div_sum).mean()
+
+        # Runtime assertion: verify loss is finite (no NaN from Jacobian correction)
+        assert torch.isfinite(loss), (
+            f"Non-finite GRPO loss detected: loss={loss.item()}, "
+            f"policy_loss_mean={policy_loss.mean().item()}, "
+            f"kl_div_mean={kl_div_sum.mean().item()}"
+        )
 
         # Diagnostic metrics
         with torch.no_grad():

@@ -305,6 +305,14 @@ class PPODrifting(PPOFlow):
         # Transition distribution
         dist = Normal(action_mean_flat, noise_std)
         logprob_trans = dist.log_prob(action_target).sum(-1)  # (B,)
+
+        # Runtime assertion: verify log-probabilities are finite (Jacobian correction check)
+        assert torch.isfinite(logprob_trans).all(), (
+            f"Non-finite log-probability in PPO Drifting transition: "
+            f"NaN count={logprob_trans.isnan().sum().item()}, "
+            f"Inf count={logprob_trans.isinf().sum().item()}"
+        )
+
         logprob += logprob_trans
         logprob_steps += 1
 
@@ -407,6 +415,13 @@ class PPODrifting(PPOFlow):
 
         # Final action clipping
         xt = xt.clamp_(self.act_min, self.act_max)
+
+        # Runtime assertion: verify action boundaries before env interaction
+        assert xt.min() >= self.act_min and xt.max() <= self.act_max, (
+            f"Action boundary violation after clamp in PPO Drifting: "
+            f"min={xt.min().item():.6f}, max={xt.max().item():.6f}, "
+            f"expected range=[{self.act_min}, {self.act_max}]"
+        )
 
         if ret_logprob:
             logprob_transition = dist.log_prob(xt).sum(dim=(-2, -1)).to(self.device)
