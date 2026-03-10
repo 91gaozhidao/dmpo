@@ -43,6 +43,7 @@ Sun Yat-sen University
 ## Highlights
 
 - **Single-Step Inference** – MeanFlow enables mathematically-derived one-step generation without knowledge distillation.
+- **Drifting Policy** – High-efficiency 1-NFE (one-step) generation with dual-field (positive/negative) drifting logic.
 - **Dispersive Regularization** – Prevents representation collapse in one-step policies via information-theoretic foundations.
 - **RL Fine-Tuning** – PPO-based optimization to surpass expert demonstrations with BC regularization.
 - **Lightweight Architecture** – 1.78M parameters enabling >120Hz real-time control.
@@ -73,11 +74,11 @@ pip install -e .[all]
 
 ### 2. External Dependencies
 
-| Environment Suite | Requirement | Notes |
-| ----------------- | ----------- | ----- |
-| Robomimic | MuJoCo 2.1.0 | see `installation/install_mujoco.md` |
-| OpenAI Gym | D4RL datasets | see `installation/install_d4rl.md` |
-| Franka Kitchen | MuJoCo 2.1.0 | see `installation/install_kitchen.md` |
+| Environment Suite | Requirement   | Notes                                 |
+| ----------------- | ------------- | ------------------------------------- |
+| Robomimic         | MuJoCo 2.1.0  | see `installation/install_mujoco.md`  |
+| OpenAI Gym        | D4RL datasets | see `installation/install_d4rl.md`    |
+| Franka Kitchen    | MuJoCo 2.1.0  | see `installation/install_kitchen.md` |
 
 Set shared paths and logging endpoints:
 ```bash
@@ -191,11 +192,11 @@ model:
 
 ## Supported Tasks
 
-| Domain | Tasks | Notes |
-| ------ | ----- | ----- |
-| Robomimic (RGB) | lift, can, square, transport | default configs under `cfg/robomimic` |
-| OpenAI Gym | hopper, walker2d, ant, humanoid | state-based locomotion |
-| Franka Kitchen | kitchen-partial, kitchen-complete, kitchen-mixed | state-based high-DOF control |
+| Domain          | Tasks                                            | Notes                                 |
+| --------------- | ------------------------------------------------ | ------------------------------------- |
+| Robomimic (RGB) | lift, can, square, transport                     | default configs under `cfg/robomimic` |
+| OpenAI Gym      | hopper, walker2d, ant, humanoid                  | state-based locomotion                |
+| Franka Kitchen  | kitchen-partial, kitchen-complete, kitchen-mixed | state-based high-DOF control          |
 
 Real robot deployment scripts (Franka-Emika-Panda) are provided under `script/real_robot/`.
 
@@ -205,22 +206,22 @@ Real robot deployment scripts (Franka-Emika-Panda) are provided under `script/re
 
 ### Comparison with One-Step Baselines (Robomimic)
 
-| Method | NFE | Distill. | Lift | Can | Square | Transport |
-| ------ | --- | -------- | ---- | --- | ------ | --------- |
-| DP-C (Teacher) | 100 | - | 97% | 96% | 82% | 46% |
-| CP | 1 | Yes | - | - | 65% | 38% |
-| OneDP-S | 1 | Yes | - | - | 77% | 72% |
-| MP1 | 1 | No | 95% | 80% | 35% | 38% |
-| **DMPO (Ours)** | **1** | **No** | **100%** | **100%** | **83%** | **88%** |
+| Method          | NFE   | Distill. | Lift     | Can      | Square  | Transport |
+| --------------- | ----- | -------- | -------- | -------- | ------- | --------- |
+| DP-C (Teacher)  | 100   | -        | 97%      | 96%      | 82%     | 46%       |
+| CP              | 1     | Yes      | -        | -        | 65%     | 38%       |
+| OneDP-S         | 1     | Yes      | -        | -        | 77%     | 72%       |
+| MP1             | 1     | No       | 95%      | 80%      | 35%     | 38%       |
+| **DMPO (Ours)** | **1** | **No**   | **100%** | **100%** | **83%** | **88%**   |
 
 ### Model Efficiency Comparison
 
-| Model | Vision | Params | Steps | Time (4090) | Freq | Speedup |
-| ----- | ------ | ------ | ----- | ----------- | ---- | ------- |
-| DP (DDPM) | ResNet-18x2 | 281M | 100 | 391.1ms | 2.6Hz | 1x |
-| CP | ResNet-18x2 | 285M | 1 | 5.4ms | 187Hz | 73x |
-| MP1 | PointNet | 256M | 1 | 4.1ms | 244Hz | 96x |
-| **DMPO (Ours)** | **light ViT** | **1.78M** | **1** | **0.6ms** | **1770Hz** | **694x** |
+| Model           | Vision        | Params    | Steps | Time (4090) | Freq       | Speedup  |
+| --------------- | ------------- | --------- | ----- | ----------- | ---------- | -------- |
+| DP (DDPM)       | ResNet-18x2   | 281M      | 100   | 391.1ms     | 2.6Hz      | 1x       |
+| CP              | ResNet-18x2   | 285M      | 1     | 5.4ms       | 187Hz      | 73x      |
+| MP1             | PointNet      | 256M      | 1     | 4.1ms       | 244Hz      | 96x      |
+| **DMPO (Ours)** | **light ViT** | **1.78M** | **1** | **0.6ms**   | **1770Hz** | **694x** |
 
 ### Holistic Radar Comparison
 
