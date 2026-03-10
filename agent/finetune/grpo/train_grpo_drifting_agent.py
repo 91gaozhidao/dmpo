@@ -117,7 +117,7 @@ class TrainGRPODriftingAgent(TrainAgent):
 
             for g in range(self.group_size):
                 # Reset environment to the same initial state
-                self.venv.seed([seed + 0] * self.n_envs)
+                self.venv.seed([seed] * self.n_envs)
                 obs_venv = self.reset_env_all()
 
                 traj_obs = []
@@ -234,6 +234,7 @@ class TrainGRPODriftingAgent(TrainAgent):
 
         total_metrics = {}
         num_updates = 0
+        last_loss = 0.0
 
         for epoch in range(self.update_epochs):
             # Shuffle data
@@ -259,6 +260,8 @@ class TrainGRPODriftingAgent(TrainAgent):
                     )
                 self.optimizer.step()
 
+                last_loss = loss.item()
+
                 # Accumulate metrics
                 for k, v in metrics.items():
                     total_metrics[k] = total_metrics.get(k, 0.0) + v
@@ -268,7 +271,7 @@ class TrainGRPODriftingAgent(TrainAgent):
         avg_metrics = {
             k: v / max(num_updates, 1) for k, v in total_metrics.items()
         }
-        avg_metrics["loss"] = loss.item()
+        avg_metrics["loss"] = last_loss
         avg_metrics["num_updates"] = num_updates
 
         return avg_metrics
