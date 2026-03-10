@@ -293,6 +293,30 @@ python script/run.py \
   --config-name=pre_diffusion_unet
 ```
 
+#### Drifting Policy (1-NFE)
+
+```bash
+# Can 任务 — Drifting Policy（单步推理）
+python script/run.py \
+  --config-dir=cfg/robomimic/pretrain/can \
+  --config-name=pre_drifting_mlp_img
+
+# Lift 任务
+python script/run.py \
+  --config-dir=cfg/robomimic/pretrain/lift \
+  --config-name=pre_drifting_mlp_img
+
+# Square 任务
+python script/run.py \
+  --config-dir=cfg/robomimic/pretrain/square \
+  --config-name=pre_drifting_mlp_img
+
+# Transport 任务
+python script/run.py \
+  --config-dir=cfg/robomimic/pretrain/transport \
+  --config-name=pre_drifting_mlp_img
+```
+
 #### 高斯 / GMM 策略
 
 ```bash
@@ -390,6 +414,30 @@ python script/run.py \
 python script/run.py \
   --config-dir=cfg/gym/pretrain/walker2d-medium-v2 \
   --config-name=pre_diffusion_mlp
+```
+
+#### Drifting Policy (1-NFE)
+
+```bash
+# Hopper
+python script/run.py \
+  --config-dir=cfg/gym/pretrain/hopper-medium-v2 \
+  --config-name=pre_drifting_mlp
+
+# Walker2d
+python script/run.py \
+  --config-dir=cfg/gym/pretrain/walker2d-medium-v2 \
+  --config-name=pre_drifting_mlp
+
+# Ant
+python script/run.py \
+  --config-dir=cfg/gym/pretrain/ant-medium-expert-v2 \
+  --config-name=pre_drifting_mlp
+
+# Kitchen tasks
+python script/run.py \
+  --config-dir=cfg/gym/pretrain/kitchen-partial-v0 \
+  --config-name=pre_drifting_mlp
 ```
 
 #### 在 MuJoCo 环境中实时测试
@@ -556,6 +604,40 @@ python script/run.py \
   base_policy_path=hf://pretrained_checkpoints/DMPO_pretraining_robomimic_checkpoints/w_0p5/can/can_w0p5_08_meanflow_dispersive.pt
 ```
 
+#### PPO + Drifting Policy（1-NFE，图像输入）
+
+```bash
+# Can 任务 — PPO 微调 Drifting Policy
+python script/run.py \
+  --config-dir=cfg/robomimic/finetune/can \
+  --config-name=ft_ppo_drifting_mlp_img \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+
+# Square 任务
+python script/run.py \
+  --config-dir=cfg/robomimic/finetune/square \
+  --config-name=ft_ppo_drifting_mlp_img \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+```
+
+#### GRPO + Drifting Policy（无 Critic，图像输入）
+
+GRPO 通过组内 Z-score 优势标准化代替 Critic 网络，特别适合 Drifting Policy 的 1-NFE 推理。
+
+```bash
+# Can 任务 — GRPO 微调 Drifting Policy
+python script/run.py \
+  --config-dir=cfg/robomimic/finetune/can \
+  --config-name=ft_grpo_drifting_mlp_img \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+
+# Square 任务
+python script/run.py \
+  --config-dir=cfg/robomimic/finetune/square \
+  --config-name=ft_grpo_drifting_mlp_img \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+```
+
 #### PPO + ReFlow（图像输入）
 
 ```bash
@@ -719,6 +801,38 @@ python script/run.py \
   --config-dir=cfg/gym/finetune/hopper-v2 \
   --config-name=ft_ppo_meanflow_mlp \
   base_policy_path=hf://pretrained_checkpoints/DMPO_pretrained_gym_checkpoints/gym_improved_meanflow_dispersive/hopper-medium-v2_best.pt
+```
+
+#### PPO + Drifting Policy（1-NFE）
+
+```bash
+# Hopper — PPO 微调 Drifting Policy
+python script/run.py \
+  --config-dir=cfg/gym/finetune/hopper-v2 \
+  --config-name=ft_ppo_drifting_mlp \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+
+# Walker2d
+python script/run.py \
+  --config-dir=cfg/gym/finetune/walker2d-v2 \
+  --config-name=ft_ppo_drifting_mlp \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+```
+
+#### GRPO + Drifting Policy（无 Critic）
+
+```bash
+# Hopper — GRPO 微调 Drifting Policy
+python script/run.py \
+  --config-dir=cfg/gym/finetune/hopper-v2 \
+  --config-name=ft_grpo_drifting_mlp \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+
+# Walker2d
+python script/run.py \
+  --config-dir=cfg/gym/finetune/walker2d-v2 \
+  --config-name=ft_grpo_drifting_mlp \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
 ```
 
 #### 其他模型

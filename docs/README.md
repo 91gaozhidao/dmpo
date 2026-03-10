@@ -44,8 +44,9 @@ Sun Yat-sen University
 
 - **Single-Step Inference** – MeanFlow enables mathematically-derived one-step generation without knowledge distillation.
 - **Drifting Policy** – High-efficiency 1-NFE (one-step) generation with dual-field (positive/negative) drifting logic.
+- **GRPO Fine-Tuning** – Critic-free Group Relative Policy Optimization for Drifting Policy, using intra-group Z-score advantage normalization.
 - **Dispersive Regularization** – Prevents representation collapse in one-step policies via information-theoretic foundations.
-- **RL Fine-Tuning** – PPO-based optimization to surpass expert demonstrations with BC regularization.
+- **RL Fine-Tuning** – PPO-based and GRPO-based optimization to surpass expert demonstrations with BC regularization.
 - **Lightweight Architecture** – 1.78M parameters enabling >120Hz real-time control.
 - **5-20× Speedup** – Significant inference acceleration over multi-step baselines.
 
@@ -160,6 +161,42 @@ python script/run.py \
   base_policy_path=<PRETRAINED_CHECKPOINT_PATH>
 ```
 
+### Stage 2b: Drifting Policy Pre-Training & Fine-Tuning
+
+Drifting Policy achieves 1-NFE inference by front-loading the mean-shift computation into training.
+
+**Pre-training (state-based):**
+```bash
+python script/run.py \
+  --config-dir=cfg/gym/pretrain/<TASK_NAME> \
+  --config-name=pre_drifting_mlp
+```
+
+**Pre-training (image-based):**
+```bash
+python script/run.py \
+  --config-dir=cfg/robomimic/pretrain/<TASK_NAME> \
+  --config-name=pre_drifting_mlp_img
+```
+
+**PPO Fine-tuning:**
+```bash
+python script/run.py \
+  --config-dir=cfg/gym/finetune/<TASK_NAME> \
+  --config-name=ft_ppo_drifting_mlp \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+```
+
+**GRPO Fine-tuning (Critic-free):**
+```bash
+python script/run.py \
+  --config-dir=cfg/gym/finetune/<TASK_NAME> \
+  --config-name=ft_grpo_drifting_mlp \
+  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+```
+
+> 📖 **For Drifting Policy mathematical foundations and full parameter reference**, see the [Drifting Guide](docs/Drifting_Guide.md).
+
 ### Evaluation & Rollouts
 
 ```bash
@@ -192,13 +229,15 @@ model:
 
 ## Supported Tasks
 
-| Domain          | Tasks                                            | Notes                                 |
-| --------------- | ------------------------------------------------ | ------------------------------------- |
-| Robomimic (RGB) | lift, can, square, transport                     | default configs under `cfg/robomimic` |
-| OpenAI Gym      | hopper, walker2d, ant, humanoid                  | state-based locomotion                |
-| Franka Kitchen  | kitchen-partial, kitchen-complete, kitchen-mixed | state-based high-DOF control          |
+| Domain          | Tasks                                            | Policy Types                  | Notes                                 |
+| --------------- | ------------------------------------------------ | ----------------------------- | ------------------------------------- |
+| Robomimic (RGB) | lift, can, square, transport                     | MeanFlow, Drifting, Diffusion | image-based configs under `cfg/robomimic` |
+| OpenAI Gym      | hopper, walker2d, ant, humanoid                  | MeanFlow, Drifting            | state-based locomotion                |
+| Franka Kitchen  | kitchen-partial, kitchen-complete, kitchen-mixed | MeanFlow, Drifting            | state-based high-DOF control          |
+| D3IL            | avoid_m1, avoid_m2, avoid_m3                     | Drifting, Diffusion, Gaussian | multi-modal benchmarks                |
+| Furniture-Bench | lamp, one_leg, round_table (low/med)             | Drifting, Diffusion, Gaussian | assembly tasks                        |
 
-Real robot deployment scripts (Franka-Emika-Panda) are provided under `script/real_robot/`.
+All environments support Drifting Policy with both PPO and GRPO fine-tuning.
 
 ---
 
@@ -238,23 +277,38 @@ Real robot deployment scripts (Franka-Emika-Panda) are provided under `script/re
 ```
 dmpo-release/
 ├── agent/                    # training & evaluation agents
-│   ├── pretrain/            # pre-training scripts
-│   └── finetune/            # PPO fine-tuning scripts
+│   ├── pretrain/            # pre-training scripts (diffusion, meanflow, drifting)
+│   ├── finetune/            # fine-tuning scripts
+│   │   ├── reinflow/        # PPO fine-tuning (meanflow, drifting, shortcut)
+│   │   ├── grpo/            # GRPO fine-tuning (critic-free, drifting)
+│   │   ├── dppo/            # DPPO fine-tuning (diffusion)
+│   │   └── dpro/            # DPRO fine-tuning
+│   └── eval/                # evaluation agents
 ├── cfg/                      # experiment YAMLs (Hydra configs)
-│   ├── robomimic/           # Robomimic tasks
-│   ├── gym/                 # OpenAI Gym tasks
-│   └── kitchen/             # Franka Kitchen tasks
+│   ├── robomimic/           # Robomimic tasks (image-based)
+│   ├── gym/                 # OpenAI Gym & Franka Kitchen tasks
+│   ├── d3il/                # D3IL multi-modal tasks
+│   └── furniture/           # Furniture-Bench tasks
 ├── model/                    # model architectures
-│   ├── flow/                # MeanFlow implementation
+│   ├── flow/                # MeanFlow, ReFlow, Shortcut implementations
+│   ├── drifting/            # Drifting Policy (1-NFE)
+│   │   ├── drifting.py      # core drifting field computation
+│   │   ├── ft_ppo/          # PPO wrapper (NoisyDriftingMLP)
+│   │   └── ft_grpo/         # GRPO wrapper (NoisyDriftingPolicy)
 │   ├── diffusion/           # diffusion baselines
-│   └── common/              # shared components (ViT, MLP)
+│   ├── common/              # shared components (ViT, MLP, Critic)
+│   └── loss/                # dispersive loss functions
 ├── env/                      # environment wrappers
 ├── util/                     # utilities
 ├── script/                   # launch scripts
 │   ├── run.py               # unified launcher
 │   └── real_robot/          # real robot deployment
 ├── installation/             # environment setup guides
-├── docs/                     # extended documentation (includes [Training Guide](docs/Training_Guide.md))
+├── docs/                     # extended documentation
+│   ├── Training_Guide.md    # comprehensive training SOP
+│   ├── Drifting_Guide.md    # Drifting Policy math & config reference
+│   ├── Custom.md            # adding custom datasets/environments
+│   └── REPO_STRUCTURE.md    # detailed file descriptions
 └── sample_figs/              # sample figures
 ```
 

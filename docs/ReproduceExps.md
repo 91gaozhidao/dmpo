@@ -147,6 +147,26 @@ Fine-tuning tweaks pre-trained policies with online RL. Check out these examples
   python script/run.py --config-dir=cfg/gym/finetune/ant-v2 --config-name=ft_ppo_reflow_mlp_img denoising_steps=1 ft_denoising_steps=1 
   ```
 
+- **Drifting Policy (1-NFE) with PPO in OpenAI Gym:**
+  ```bash
+  python script/run.py --config-dir=cfg/gym/finetune/hopper-v2 --config-name=ft_ppo_drifting_mlp base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+  ```
+
+- **Drifting Policy (1-NFE) with GRPO in OpenAI Gym (no Critic):**
+  ```bash
+  python script/run.py --config-dir=cfg/gym/finetune/hopper-v2 --config-name=ft_grpo_drifting_mlp base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+  ```
+
+- **Drifting Policy (1-NFE) with PPO in Robomimic (image-based):**
+  ```bash
+  python script/run.py --config-dir=cfg/robomimic/finetune/can --config-name=ft_ppo_drifting_mlp_img base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+  ```
+
+- **Drifting Policy (1-NFE) with GRPO in Robomimic (image-based, no Critic):**
+  ```bash
+  python script/run.py --config-dir=cfg/robomimic/finetune/can --config-name=ft_grpo_drifting_mlp_img base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
+  ```
+
 #### Troubleshooting
 
 - **Training Crashed? Resume It:**
