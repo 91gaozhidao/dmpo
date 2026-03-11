@@ -8,7 +8,7 @@ _target_: agent.eval.eval_drifting_img_agent.EvalImgDriftingAgent
 name: ${env_name}_eval_drifting_mlp_img_ta${horizon_steps}_td${denoising_steps}
 logdir: 
   ${oc.env:REINFLOW_LOG_DIR}/robomimic/eval/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
-base_policy_path: ""
+base_policy_path: "" # placeholder for CLI override
 robomimic_env_cfg_path: cfg/robomimic/env_meta/${env_name}-img.json
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/robomimic/${env_name}-img/normalization.npz
 
@@ -97,7 +97,6 @@ model:
   obs_dim: ${obs_dim}
   max_denoising_steps: ${denoising_steps}
   seed: ${seed}
-
 
 
   drift_coef: 1.0

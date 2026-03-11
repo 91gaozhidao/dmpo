@@ -20,13 +20,13 @@ _target_: agent.eval.eval_drifting_agent.EvalDriftingAgent
 
 name: ${env_name}_eval_drifting_mlp_ta${horizon_steps}_td${denoising_steps}
 logdir: ${oc.env:REINFLOW_LOG_DIR}/gym/eval/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
-base_policy_path: ""
+base_policy_path: "" # placeholder for CLI override
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env_name}/normalization.npz
 
 seed: 42
 device: cuda:2
 
-denoising_steps: 1  # Drifting Policy uses 1 inference step by design
+denoising_steps: 1  # MeanFlow typically uses 5 inference steps
 denoising_step_list: [1]
 load_ema: True
 

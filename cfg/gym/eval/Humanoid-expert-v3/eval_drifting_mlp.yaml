@@ -20,7 +20,7 @@ _target_: agent.eval.eval_drifting_agent.EvalDriftingAgent
 
 name: ${env_name}_eval_drifting_mlp_ta${horizon_steps}_td${denoising_steps}
 logdir: ${oc.env:REINFLOW_LOG_DIR}/gym/eval/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
-base_policy_path: ""
+base_policy_path: "" # placeholder for CLI override
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env_name}/normalization.npz
 
 seed: 42
@@ -73,7 +73,6 @@ model:
   obs_dim: ${obs_dim}
   max_denoising_steps: ${denoising_steps}
   seed: ${seed}
-
   drift_coef: 1.0
   neg_drift_coef: 0.5
   mask_self: True
