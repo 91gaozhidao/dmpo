@@ -74,6 +74,24 @@ class TestModuleImports:
         except ImportError as e:
             pytest.skip(f"Optional dependency missing: {e}")
 
+    def test_import_train_ppo_drifting_img_agent(self):
+        try:
+            mod = importlib.import_module(
+                "agent.finetune.reinflow.train_ppo_drifting_img_agent"
+            )
+            assert hasattr(mod, "TrainPPOImgDriftingAgent")
+        except ImportError as e:
+            pytest.skip(f"Optional dependency missing: {e}")
+
+    def test_import_train_drifting_dispersive_agent(self):
+        try:
+            mod = importlib.import_module(
+                "agent.pretrain.train_drifting_dispersive_agent"
+            )
+            assert hasattr(mod, "TrainDriftingDispersiveAgent")
+        except (ImportError, KeyError) as e:
+            pytest.skip(f"Optional dependency or env var missing: {e}")
+
     def test_import_drifting_init_packages(self):
         """Verify __init__.py modules don't cause import errors."""
         importlib.import_module("model.drifting")
@@ -97,7 +115,9 @@ class TestModuleImports:
         optional_modules = [
             "agent.finetune.grpo.train_grpo_drifting_agent",
             "agent.pretrain.train_drifting_agent",
+            "agent.pretrain.train_drifting_dispersive_agent",
             "agent.finetune.reinflow.train_ppo_drifting_agent",
+            "agent.finetune.reinflow.train_ppo_drifting_img_agent",
         ]
         for mod_name in optional_modules:
             try:
@@ -120,8 +140,16 @@ class TestFactoryRegistration:
             "TrainDriftingAgent",
         ),
         (
+            "agent.pretrain.train_drifting_dispersive_agent.TrainDriftingDispersiveAgent",
+            "TrainDriftingDispersiveAgent",
+        ),
+        (
             "agent.finetune.reinflow.train_ppo_drifting_agent.TrainPPODriftingAgent",
             "TrainPPODriftingAgent",
+        ),
+        (
+            "agent.finetune.reinflow.train_ppo_drifting_img_agent.TrainPPOImgDriftingAgent",
+            "TrainPPOImgDriftingAgent",
         ),
         (
             "agent.finetune.grpo.train_grpo_drifting_agent.TrainGRPODriftingAgent",

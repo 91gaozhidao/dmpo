@@ -1,377 +1,500 @@
-# DMPO: Dispersive MeanFlow Policy Optimization
+# DMPO — Project Architecture & Deep Dive
 
-<div align="center">
-
-[![Project Page](https://img.shields.io/badge/Project_Page-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://guowei-zou.github.io/dmpo-page/)
-[![arXiv](https://img.shields.io/badge/arXiv-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white)](http://arxiv.org/abs/2601.20701)
-[![Datasets](https://img.shields.io/badge/Datasets-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/datasets/Guowei-Zou/DMPO-datasets)
-[![Checkpoints](https://img.shields.io/badge/Checkpoints-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/Guowei-Zou/DMPO-checkpoints)
-[![Youtube](https://img.shields.io/badge/Youtube-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://www.youtube.com/watch?v=_vB_mchoux8)
-[![Bilibili](https://img.shields.io/badge/Bilibili-00A1D6?style=for-the-badge&logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV133zXBPEdb/?share_source=copy_web&vd_source=af323cc810d69452bd73799b93e838d6)
-
-> **One Step Is Enough: Dispersive MeanFlow Policy Optimization**
-> A unified framework enabling true one-step generation for real-time robotic control via MeanFlow, dispersive regularization, and RL fine-tuning.
-
-[Guowei Zou](https://guowei-zou.github.io/Guowei-Zou/), Haitao Wang, [Hejun Wu](https://cse.sysu.edu.cn/teacher/WuHejun), Yukun Qian, [Yuhang Wang](https://hanlanqian.github.io/about/?lang=en), [Weibing Li](https://cse.sysu.edu.cn/teacher/LiWeibing)
-<br>
-Sun Yat-sen University
-
-</div>
+> **Dispersive MeanFlow Policy Optimization**: A unified framework for single-step (1-NFE) generative policy learning with online RL fine-tuning.
 
 ---
 
-## Overview
+## Table of Contents
 
-<div align="center">
-<img src="sample_figs/abstract_image_page.png" alt="DMPO Overview" width="800"/>
-
-*From efficiency-performance trade-off to practical real-time control. Existing methods lie on the trade-off curve: multi-step approaches achieve strong performance but slow inference, while one-step methods are fast but unstable. DMPO breaks this trade-off by occupying the upper-right region.*
-</div>
-
----
-
-## Architecture at a Glance
-
-<div align="center">
-<img src="sample_figs/DMPO-Framework.png" alt="DMPO Architecture" width="800"/>
-
-*DMPO workflow: Stage 1 (Top & Middle) – Pre-training with dispersive MeanFlow. Stage 2 (Bottom) – PPO fine-tuning formulated as a two-layer policy factorization.*
-</div>
+1. [High-Level Overview](#1-high-level-overview)
+2. [Repository Directory Map](#2-repository-directory-map)
+3. [Core Data Flow](#3-core-data-flow)
+4. [Model Layer Deep Dive](#4-model-layer-deep-dive)
+5. [Agent Layer Deep Dive](#5-agent-layer-deep-dive)
+6. [Configuration System](#6-configuration-system)
+7. [Drifting Policy vs Mean Flow Policy — Mathematical & Code Comparison](#7-drifting-policy-vs-mean-flow-policy)
+8. [Fine-Tuning Architectures: PPO & GRPO](#8-fine-tuning-architectures)
+9. [Environment Integration](#9-environment-integration)
 
 ---
 
-## Highlights
+## 1. High-Level Overview
 
-- **Single-Step Inference** – MeanFlow enables mathematically-derived one-step generation without knowledge distillation.
-- **Drifting Policy** – High-efficiency 1-NFE (one-step) generation with dual-field (positive/negative) drifting logic.
-- **GRPO Fine-Tuning** – Critic-free Group Relative Policy Optimization for Drifting Policy, using intra-group Z-score advantage normalization.
-- **Dispersive Regularization** – Prevents representation collapse in one-step policies via information-theoretic foundations.
-- **RL Fine-Tuning** – PPO-based and GRPO-based optimization to surpass expert demonstrations with BC regularization.
-- **Lightweight Architecture** – 1.78M parameters enabling >120Hz real-time control.
-- **5-20× Speedup** – Significant inference acceleration over multi-step baselines.
+DMPO implements a two-stage training pipeline for continuous control:
+
+```
+Stage 1: Offline Pre-training          Stage 2: Online RL Fine-tuning
+┌──────────────────────────┐          ┌──────────────────────────────┐
+│  Expert Dataset (D4RL)   │          │  Environment Interaction     │
+│         ↓                │          │         ↓                    │
+│  Flow Matching / Drift   │   ──►    │  PPO or GRPO Objective       │
+│  Loss Optimization       │          │  + Exploration Noise         │
+│         ↓                │          │         ↓                    │
+│  Pretrained Policy θ     │          │  Fine-tuned Policy θ*        │
+└──────────────────────────┘          └──────────────────────────────┘
+```
+
+**Supported Policy Types:**
+| Policy | NFE | Stage 1 | Stage 2 (PPO) | Stage 2 (GRPO) |
+|--------|-----|---------|---------------|----------------|
+| **Drifting** | 1 | ✅ | ✅ | ✅ |
+| MeanFlow | 5 | ✅ | ✅ | — |
+| ShortCut | 1–5 | ✅ | ✅ | — |
+| ReFlow | 5+ | ✅ | ✅ | — |
+| Diffusion | 10–100 | ✅ | ✅ | — |
+| Consistency | 1 | ✅ | — | — |
 
 ---
 
-## Quick Start
-
-### 1. Clone & Environment Setup
-
-```bash
-git clone https://github.com/Guowei-Zou/dmpo-release.git
-cd dmpo-release
-conda create -n dmpo python=3.10 -y
-conda activate dmpo
-pip install -e .
-```
-
-Optional extras:
-```bash
-# Vision manipulation stack (Robomimic)
-pip install -e .[robomimic]
-
-# Full environment suite
-pip install -e .[all]
-```
-
-### 2. External Dependencies
-
-| Environment Suite | Requirement   | Notes                                 |
-| ----------------- | ------------- | ------------------------------------- |
-| Robomimic         | MuJoCo 2.1.0  | see `installation/install_mujoco.md`  |
-| OpenAI Gym        | D4RL datasets | see `installation/install_d4rl.md`    |
-| Franka Kitchen    | MuJoCo 2.1.0  | see `installation/install_kitchen.md` |
-
-Set shared paths and logging endpoints:
-```bash
-source script/set_path.sh  # defines DATA_ROOT, LOG_ROOT, WANDB_ENTITY
-```
-
----
-
-## Datasets & Checkpoints
-
-- **Demonstration datasets:** Downloaded automatically from Google Drive when launching pre-training. Also available on [Hugging Face](https://huggingface.co/datasets/Guowei-Zou/DMPO-datasets).
-- **Pretrained checkpoints:** [Hugging Face](https://huggingface.co/Guowei-Zou/DMPO-checkpoints)
-
-### Pretrained Checkpoint Structure
+## 2. Repository Directory Map
 
 ```
-pretrained_checkpoints/
-├── DMPO_pretrained_gym_checkpoints/
-│   ├── gym_improved_meanflow/           # MeanFlow without dispersive loss
-│   │   └── {task}_best.pt               # hopper, walker2d, ant, Humanoid, kitchen-*
-│   └── gym_improved_meanflow_dispersive/  # MeanFlow with dispersive loss (recommended)
-│       └── {task}_best.pt
-└── DMPO_pretraining_robomimic_checkpoints/
-    ├── w_0p1/                           # dispersive weight = 0.1
-    ├── w_0p5/                           # dispersive weight = 0.5 (recommended)
-    └── w_0p9/                           # dispersive weight = 0.9
-        └── {task}/                      # lift, can, square, transport
-            ├── {task}_w*_08_meanflow_dispersive.pt  # DMPO (recommended)
-            ├── {task}_w*_02_meanflow_baseline.pt    # MeanFlow baseline
-            ├── {task}_w*_03_reflow_baseline.pt      # Reflow baseline
-            └── {task}_w*_01_shortcut_flow_baseline.pt
-```
-
-### Download from Hugging Face
-
-Use the `hf://` prefix in config files to auto-download from Hugging Face:
-
-```yaml
-# Gym tasks (fine-tuning)
-base_policy_path: hf://pretrained_checkpoints/DMPO_pretrained_gym_checkpoints/gym_improved_meanflow_dispersive/hopper-medium-v2_best.pt
-
-# Robomimic tasks (fine-tuning)
-base_policy_path: hf://pretrained_checkpoints/DMPO_pretraining_robomimic_checkpoints/w_0p5/can/can_w0p5_08_meanflow_dispersive.pt
-```
-
-To use custom data, place trajectories under your data directory and update the corresponding YAML in `cfg/<ENV_GROUP>/pretrain/<TASK>.yaml`.
-
----
-
-## Running DMPO
-
-### Stage 1: Dispersive Pre-Training (Image-Based)
-
-```bash
-python script/run.py \
-  --config-dir=cfg/robomimic/pretrain/<TASK_NAME> \
-  --config-name=pre_meanflow_mlp_img_dispersive \
-  denoising_steps=1 \
-  dispersive.loss_type=infonce_l2 \
-  dispersive.weight=0.5
-```
-Available `<TASK_NAME>`: `lift`, `can`, `square`, `transport`.
-
-### Stage 1: State-Based Variants
-
-```bash
-python script/run.py \
-  --config-dir=cfg/<ENV_GROUP>/pretrain/<TASK_NAME> \
-  --config-name=pre_meanflow_mlp_state_dispersive
-```
-`<ENV_GROUP>` can be `gym`, `robomimic`, or `kitchen`.
-
-### Stage 2: PPO Fine-Tuning
-
-```bash
-python script/run.py \
-  --config-dir=cfg/robomimic/finetune/<TASK_NAME> \
-  --config-name=ft_ppo_meanflow_mlp \
-  base_policy_path=<PRETRAINED_CHECKPOINT_PATH>
-```
-
-### Stage 2b: Drifting Policy Pre-Training & Fine-Tuning
-
-Drifting Policy achieves 1-NFE inference by front-loading the mean-shift computation into training.
-
-**Pre-training (state-based):**
-```bash
-python script/run.py \
-  --config-dir=cfg/gym/pretrain/<TASK_NAME> \
-  --config-name=pre_drifting_mlp
-```
-
-**Pre-training (image-based):**
-```bash
-python script/run.py \
-  --config-dir=cfg/robomimic/pretrain/<TASK_NAME> \
-  --config-name=pre_drifting_mlp_img
-```
-
-**PPO Fine-tuning:**
-```bash
-python script/run.py \
-  --config-dir=cfg/gym/finetune/<TASK_NAME> \
-  --config-name=ft_ppo_drifting_mlp \
-  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
-```
-
-**GRPO Fine-tuning (Critic-free):**
-```bash
-python script/run.py \
-  --config-dir=cfg/gym/finetune/<TASK_NAME> \
-  --config-name=ft_grpo_drifting_mlp \
-  base_policy_path=<PRETRAINED_DRIFTING_CHECKPOINT>
-```
-
-> 📖 **For Drifting Policy mathematical foundations and full parameter reference**, see the [Drifting Guide](docs/Drifting_Guide.md).
-
-### Evaluation & Rollouts
-
-```bash
-python script/run.py \
-  --config-dir=cfg/robomimic/eval/<TASK_NAME> \
-  --config-name=eval_meanflow_mlp \
-  checkpoint_path=<CHECKPOINT_PATH>
-```
-Metrics and plots are stored in `dmpo_eval_results/`.
-
-> 📖 **For a comprehensive step-by-step guide** covering all environments, models, and algorithms, see the [Training Guide](docs/Training_Guide.md).
-
----
-
-## Dispersive Loss Configuration
-
-```yaml
-model:
-  use_dispersive_loss: true
-  dispersive:
-    weight: 0.5                    # regularization strength
-    temperature: 0.3               # contrastive temperature
-    loss_type: "infonce_l2"        # infonce_l2 | infonce_cosine | hinge | covariance
-    target_layer: "mid"            # early | mid | late | all
-```
-
-> **Tip**: Start with `loss_type: infonce_l2`, `weight: 0.5`, `target_layer: mid` for Robomimic image tasks. Increase `weight` if training diverges or features collapse.
-
----
-
-## Supported Tasks
-
-| Domain          | Tasks                                            | Policy Types                  | Notes                                 |
-| --------------- | ------------------------------------------------ | ----------------------------- | ------------------------------------- |
-| Robomimic (RGB) | lift, can, square, transport                     | MeanFlow, Drifting, Diffusion | image-based configs under `cfg/robomimic` |
-| OpenAI Gym      | hopper, walker2d, ant, humanoid                  | MeanFlow, Drifting            | state-based locomotion                |
-| Franka Kitchen  | kitchen-partial, kitchen-complete, kitchen-mixed | MeanFlow, Drifting            | state-based high-DOF control          |
-| D3IL            | avoid_m1, avoid_m2, avoid_m3                     | Drifting, Diffusion, Gaussian | multi-modal benchmarks                |
-| Furniture-Bench | lamp, one_leg, round_table (low/med)             | Drifting, Diffusion, Gaussian | assembly tasks                        |
-
-All environments support Drifting Policy with both PPO and GRPO fine-tuning.
-
----
-
-## Reference Metrics
-
-### Comparison with One-Step Baselines (Robomimic)
-
-| Method          | NFE   | Distill. | Lift     | Can      | Square  | Transport |
-| --------------- | ----- | -------- | -------- | -------- | ------- | --------- |
-| DP-C (Teacher)  | 100   | -        | 97%      | 96%      | 82%     | 46%       |
-| CP              | 1     | Yes      | -        | -        | 65%     | 38%       |
-| OneDP-S         | 1     | Yes      | -        | -        | 77%     | 72%       |
-| MP1             | 1     | No       | 95%      | 80%      | 35%     | 38%       |
-| **DMPO (Ours)** | **1** | **No**   | **100%** | **100%** | **83%** | **88%**   |
-
-### Model Efficiency Comparison
-
-| Model           | Vision        | Params    | Steps | Time (4090) | Freq       | Speedup  |
-| --------------- | ------------- | --------- | ----- | ----------- | ---------- | -------- |
-| DP (DDPM)       | ResNet-18x2   | 281M      | 100   | 391.1ms     | 2.6Hz      | 1x       |
-| CP              | ResNet-18x2   | 285M      | 1     | 5.4ms       | 187Hz      | 73x      |
-| MP1             | PointNet      | 256M      | 1     | 4.1ms       | 244Hz      | 96x      |
-| **DMPO (Ours)** | **light ViT** | **1.78M** | **1** | **0.6ms**   | **1770Hz** | **694x** |
-
-### Holistic Radar Comparison
-
-<div align="center">
-<img src="sample_figs/radar_comparison_dual.png" alt="Radar Comparison" width="800"/>
-
-*Holistic radar comparison across eight dimensions. (a) RL fine-tuning methods: DMPO forms the outer envelope, achieving top scores across all dimensions. (b) Generation methods: DMPO outperforms all baselines by combining one-step inference with lightweight architecture, high data efficiency, and the ability to go beyond demonstrations.*
-</div>
-
----
-
-## Repository Map
-
-```
-dmpo-release/
-├── agent/                    # training & evaluation agents
-│   ├── pretrain/            # pre-training scripts (diffusion, meanflow, drifting)
-│   ├── finetune/            # fine-tuning scripts
-│   │   ├── reinflow/        # PPO fine-tuning (meanflow, drifting, shortcut)
-│   │   ├── grpo/            # GRPO fine-tuning (critic-free, drifting)
-│   │   ├── dppo/            # DPPO fine-tuning (diffusion)
-│   │   └── dpro/            # DPRO fine-tuning
-│   └── eval/                # evaluation agents
-├── cfg/                      # experiment YAMLs (Hydra configs)
-│   ├── robomimic/           # Robomimic tasks (image-based)
-│   ├── gym/                 # OpenAI Gym & Franka Kitchen tasks
-│   ├── d3il/                # D3IL multi-modal tasks
-│   └── furniture/           # Furniture-Bench tasks
-├── model/                    # model architectures
-│   ├── flow/                # MeanFlow, ReFlow, Shortcut implementations
-│   ├── drifting/            # Drifting Policy (1-NFE)
-│   │   ├── drifting.py      # core drifting field computation
-│   │   ├── ft_ppo/          # PPO wrapper (NoisyDriftingMLP)
-│   │   └── ft_grpo/         # GRPO wrapper (NoisyDriftingPolicy)
-│   ├── diffusion/           # diffusion baselines
-│   ├── common/              # shared components (ViT, MLP, Critic)
-│   └── loss/                # dispersive loss functions
-├── env/                      # environment wrappers
-├── util/                     # utilities
-├── script/                   # launch scripts
-│   ├── run.py               # unified launcher
-│   └── real_robot/          # real robot deployment
-├── installation/             # environment setup guides
-├── docs/                     # extended documentation
-│   ├── Training_Guide.md    # comprehensive training SOP
-│   ├── Drifting_Guide.md    # Drifting Policy math & config reference
-│   ├── Custom.md            # adding custom datasets/environments
-│   └── REPO_STRUCTURE.md    # detailed file descriptions
-└── sample_figs/              # sample figures
+dmpo/
+├── agent/                          # Training & evaluation agents
+│   ├── pretrain/                   # Offline pre-training agents
+│   │   ├── train_agent.py              # Base PreTrainAgent class
+│   │   ├── train_drifting_agent.py     # Drifting Policy pretraining
+│   │   ├── train_drifting_dispersive_agent.py  # Drifting + dispersive loss
+│   │   ├── train_meanflow_agent.py     # MeanFlow pretraining
+│   │   ├── train_improved_meanflow_agent.py
+│   │   ├── train_shortcut_agent.py
+│   │   ├── train_shortcut_dispersive_agent.py
+│   │   ├── train_reflow_agent.py
+│   │   ├── train_reflow_dispersive_agent.py
+│   │   ├── train_consistency_agent.py
+│   │   ├── train_diffusion_agent.py
+│   │   └── train_gaussian_agent.py
+│   │
+│   ├── eval/                       # Evaluation agents
+│   │   ├── eval_agent_base.py          # Base evaluation class
+│   │   ├── eval_agent_img_base.py      # Image-based evaluation base
+│   │   ├── eval_drifting_agent.py      # Drifting Policy evaluation
+│   │   ├── eval_drifting_img_agent.py  # Drifting with image obs
+│   │   ├── eval_meanflow_agent.py
+│   │   ├── eval_meanflow_img_agent.py
+│   │   ├── eval_shortcut_agent.py
+│   │   ├── eval_shortcut_img_agent.py
+│   │   ├── eval_reflow_agent.py
+│   │   ├── eval_reflow_img_agent.py
+│   │   ├── eval_diffusion_agent.py
+│   │   ├── eval_diffusion_img_agent.py
+│   │   └── eval_consistency_img_agent.py
+│   │
+│   ├── finetune/                   # Online RL fine-tuning agents
+│   │   ├── reinflow/                   # PPO-based fine-tuning
+│   │   │   ├── train_agent.py              # Base PPO agent
+│   │   │   ├── train_ppo_shortcut_agent.py     # ShortCut PPO (state)
+│   │   │   ├── train_ppo_shortcut_img_agent.py # ShortCut PPO (image)
+│   │   │   ├── train_ppo_drifting_agent.py     # Drifting PPO (state)
+│   │   │   ├── train_ppo_drifting_img_agent.py # Drifting PPO (image)
+│   │   │   ├── train_ppo_meanflow_agent.py     # MeanFlow PPO (state)
+│   │   │   ├── train_ppo_meanflow_img_agent.py # MeanFlow PPO (image)
+│   │   │   ├── train_ppo_flow_agent.py         # Generic flow PPO
+│   │   │   ├── train_ppo_flow_img_agent.py
+│   │   │   ├── train_ppo_diffusion_agent.py
+│   │   │   ├── train_ppo_diffusion_img_agent.py
+│   │   │   ├── train_ppo_gaussian_agent.py
+│   │   │   └── buffer.py                  # PPO replay buffers
+│   │   │
+│   │   ├── grpo/                       # GRPO fine-tuning (critic-free)
+│   │   │   ├── train_grpo_drifting_agent.py    # GRPO for Drifting
+│   │   │   └── buffer.py                  # GRPO group buffer
+│   │   │
+│   │   ├── dppo/                       # Diffusion PPO variants
+│   │   ├── dpro/                       # Diffusion policy RL optimization
+│   │   ├── diffusion_baselines/        # DIPO, QSM, DQL, AWR, RWR, IDQL
+│   │   ├── flow_baselines/             # FQL, SAC
+│   │   └── offlinerl_baselines/        # IBRL, CalQL, RLPD
+│   │
+│   └── dataset/                    # Data loading utilities
+│       ├── sequence.py                 # StitchedSequenceDataset
+│       └── d3il/                       # D3IL task datasets
+│
+├── model/                          # Neural network implementations
+│   ├── common/                     # Shared components
+│   │   ├── modules.py                  # MLP blocks, RandomShiftsAug, etc.
+│   │   ├── critic.py                   # Critic networks (CriticObs)
+│   │   └── normalizer.py              # Observation normalizers
+│   │
+│   ├── drifting/                   # Drifting Policy (1-NFE)
+│   │   ├── drifting.py                 # DriftingPolicy core
+│   │   ├── ft_ppo/
+│   │   │   └── ppodrifting.py          # NoisyDriftingMLP + PPODrifting
+│   │   └── ft_grpo/
+│   │       └── grpodrifting.py         # NoisyDriftingPolicy + GRPODrifting
+│   │
+│   ├── flow/                       # Flow matching models
+│   │   ├── meanflow.py                 # MeanFlow policy
+│   │   ├── improved_meanflow.py        # Improved MeanFlow
+│   │   ├── reflow.py                   # Rectified Flow
+│   │   ├── shortcutflow.py             # ShortCut Flow
+│   │   ├── consistency.py              # Consistency models
+│   │   ├── mlp_meanflow.py             # MeanFlowMLP backbone
+│   │   ├── mlp_shortcut.py             # ShortCut MLP backbone
+│   │   ├── mlp_consistency.py          # Consistency MLP backbone
+│   │   ├── ft_ppo/                     # PPO wrappers for flows
+│   │   │   ├── ppoflow.py                 # Base PPOFlow class
+│   │   │   ├── ppomeanflow.py              # PPOMeanFlow
+│   │   │   └── pposhortcut.py              # PPOShortCut
+│   │   └── ft_baselines/
+│   │       └── fql.py                  # Flow Q-Learning
+│   │
+│   ├── diffusion/                  # DDPM/DDIM diffusion models
+│   ├── gaussian/                   # Gaussian policies
+│   └── rl/                         # RL utility modules
+│
+├── cfg/                            # Hydra configuration files
+│   ├── gym/                        # OpenAI Gym & Franka Kitchen
+│   ├── robomimic/                  # RoboMimic manipulation tasks
+│   ├── furniture/                  # FurnitureBench assembly tasks
+│   └── d3il/                       # D3IL imitation learning tasks
+│
+├── script/                         # Launch scripts
+│   └── run.py                      # Unified experiment launcher
+│
+├── tests/                          # Test suite
+│   ├── test_drifting_policy.py         # Core DriftingPolicy tests
+│   ├── test_ppo_drifting.py            # PPO fine-tuning tests
+│   ├── test_grpo_drifting.py           # GRPO fine-tuning tests
+│   ├── test_grpo_buffer.py             # GRPO buffer tests
+│   ├── test_end_to_end_smoke.py        # Integration smoke tests
+│   └── test_static_and_config.py       # Import & config validation tests
+│
+├── util/                           # Utility functions
+│   ├── dirs.py                         # Directory management
+│   └── config.py                       # Config utilities
+│
+├── env/                            # Environment wrappers
+└── data_process/                   # Data preprocessing scripts
 ```
 
 ---
 
-## Our Contributions
+## 3. Core Data Flow
 
-1. **Framework:** We introduce DMPO, a unified framework enabling stable one-step generation via principled co-design of architecture and algorithms, with 5-20× speedup over multi-step baselines.
+### 3.1 Pre-training Data Flow
 
-2. **Theory:** We establish the first information-theoretic foundation proving dispersive regularization is necessary for stable one-step generation, and derive the first mathematical formulation for RL fine-tuning of one-step policies.
+```
+StitchedSequenceDataset
+    ↓
+batch_data = (actions, observations)
+    │
+    │  actions: Tensor[B, T_a, D_a]      # B=batch, T_a=horizon, D_a=action_dim
+    │  observations: dict{"state": Tensor[B, T_c, D_obs]}
+    │                                     # T_c=cond_steps, D_obs=obs_dim
+    ↓
+PreTrainAgent.get_loss(batch_data)
+    ↓
+model.loss(x1=actions, cond=observations)
+    │
+    │  [Inside DriftingPolicy.loss()]:
+    │  1. x_gen = randn(B, T_a, D_a)          # Initial noise
+    │  2. x_pred = network(x_gen, t=1, r=0, cond)   # 1-NFE forward
+    │  3. V = compute_V(x_pred, actions)       # Drift field
+    │  4. target = (x_pred + V).detach()       # Drifted target
+    │  5. loss = MSE(x_pred, target)           # Training loss
+    ↓
+loss.backward()  →  optimizer.step()
+```
 
-3. **Validation:** We achieve state-of-the-art on RoboMimic and OpenAI Gym benchmarks, and validate real-time control (>120Hz) on a Franka robot.
+### 3.2 Online RL Fine-tuning Data Flow (PPO)
+
+```
+Environment (vectorized, n_envs parallel)
+    ↓
+obs_venv = {"state": np.array[n_envs, D_obs]}
+    ↓
+cond = {"state": Tensor[n_envs, D_obs]}   # to device
+    ↓
+PPODrifting.get_actions(cond)
+    │
+    │  [Inside NoisyDriftingMLP]:
+    │  1. x0 = randn(n_envs, T_a, D_a)         # Initial noise
+    │  2. mean = network(x0, t=1, r=0, cond)    # 1-NFE deterministic output
+    │  3. std = noise_network(mean)              # Learned exploration noise
+    │  4. action = mean + std * randn(...)       # Stochastic action
+    │  5. log_prob = Normal(mean, std).log_prob(action)
+    ↓
+action_venv = actions[:, :act_steps]     # First act_steps
+    ↓
+obs, reward, done = env.step(action_venv)
+    ↓
+PPOBuffer.add(obs, chains, reward, done)
+    ↓  [After n_steps]
+PPOBuffer.make_dataset()
+    │  → GAE advantage estimation
+    │  → Returns computation
+    ↓
+PPODrifting.loss(obs, chains, returns, values, advantages, old_logprobs)
+    │  → Clipped surrogate loss
+    │  → Value function loss
+    │  → Entropy bonus
+    │  → Optional BC regularization
+    ↓
+loss.backward()  →  actor_optimizer.step() + critic_optimizer.step()
+```
+
+### 3.3 Online RL Fine-tuning Data Flow (GRPO — Critic-Free)
+
+```
+Environment (vectorized)
+    ↓
+Homogeneous Reset: G trajectories from same initial state
+    ↓
+For each trajectory g in [1..G]:
+    ├── Sample actions via NoisyDriftingPolicy
+    ├── Collect (state, action, log_prob, reward) tuples
+    └── Compute trajectory return R_g
+    ↓
+GRPOBuffer.normalize_advantages()
+    │  advantages = (returns - mean(returns)) / (std(returns) + eps)
+    │  Zero-variance protection: if std < 1e-6, set advantages = 0
+    ↓
+GRPODrifting.compute_loss(obs, actions, advantages, old_log_probs)
+    │  1. curr_log_prob = NoisyDriftingPolicy.get_log_prob(obs, actions)
+    │  2. ratio = exp(curr_log_prob - old_log_prob)
+    │  3. surr1 = ratio * advantages
+    │  4. surr2 = clamp(ratio, 1-eps, 1+eps) * advantages
+    │  5. policy_loss = -min(surr1, surr2).mean()
+    │  6. kl_div = analytical_kl(current_dist, ref_dist)   # No critic!
+    │  7. loss = policy_loss + beta * kl_div
+    ↓
+loss.backward()  →  optimizer.step()
+```
 
 ---
 
-## Citation
+## 4. Model Layer Deep Dive
 
-If you find this work useful, please cite:
+### 4.1 MeanFlowMLP — Shared Backbone
 
-```bibtex
-@misc{zou2026stepenoughdispersivemeanflow,
-      title={One Step Is Enough: Dispersive MeanFlow Policy Optimization}, 
-      author={Guowei Zou and Haitao Wang and Hejun Wu and Yukun Qian and Yuhang Wang and Weibing Li},
-      year={2026},
-      eprint={2601.20701},
-      archivePrefix={arXiv},
-      primaryClass={cs.RO},
-      url={https://arxiv.org/abs/2601.20701}, 
+**File:** `model/flow/mlp_meanflow.py`
+
+The `MeanFlowMLP` is the neural network backbone shared by both MeanFlow and Drifting policies. It accepts:
+
+| Input | Shape | Description |
+|-------|-------|-------------|
+| `x` | `[B, T_a, D_a]` | Noisy action sequence |
+| `t` | `[B]` | Time step (0→1) |
+| `r` | `[B]` | Auxiliary variable (resolution) |
+| `cond` | `dict{"state": [B, T_c, D_obs]}` | Conditioning observation |
+
+**Output:** `[B, T_a, D_a]` — predicted velocity/action field.
+
+### 4.2 DriftingPolicy
+
+**File:** `model/drifting/drifting.py`
+
+Core implementation of the 1-NFE Drifting Policy:
+
+- **`compute_V(x, y_pos, y_neg)`**: Computes the drift field using RBF-weighted sample interactions
+- **`loss(x1, cond)`**: Pre-training loss via MSE between network output and drifted targets
+- **`sample(cond, ...)`**: Single forward pass with `t=1.0, r=0.0`
+
+### 4.3 PPODrifting
+
+**File:** `model/drifting/ft_ppo/ppodrifting.py`
+
+Two key components:
+- **`NoisyDriftingMLP`**: Wraps MeanFlowMLP with learned exploration noise (MLP predicts log-variance)
+- **`PPODrifting(PPOFlow)`**: PPO objective with single-step log-probability computation
+
+### 4.4 GRPODrifting
+
+**File:** `model/drifting/ft_grpo/grpodrifting.py`
+
+Three key components:
+- **`_tanh_jacobian_correction(u)`**: Numerically stable Jacobian for Tanh-Normal distributions
+- **`NoisyDriftingPolicy`**: Tanh-Normal policy wrapper with proper log-probability
+- **`GRPODrifting`**: Critic-free GRPO objective with analytical KL divergence
+
+---
+
+## 5. Agent Layer Deep Dive
+
+### 5.1 PreTrainAgent (Base)
+
+**File:** `agent/pretrain/train_agent.py`
+
+Provides the complete training loop:
+1. Model instantiation via Hydra `_target_`
+2. EMA model management
+3. Dataset loading and splitting
+4. Optimizer and LR scheduler
+5. Checkpoint save/load with auto-resume
+6. Optional in-training MuJoCo evaluation
+7. WandB logging integration
+
+**Key abstract methods that subclasses override:**
+- `get_loss(batch_data)` — Compute training loss
+- `inference(cond)` — Generate samples for evaluation
+
+### 5.2 Training Agent Hierarchy
+
+```
+PreTrainAgent
+├── TrainDriftingAgent             # 1-NFE, drift field loss
+│   └── TrainDriftingDispersiveAgent   # + dispersive regularization
+├── TrainMeanFlowAgent             # 5-step flow matching
+├── TrainShortCutAgent             # Adaptive-step shortcut flow
+│   ├── TrainShortCutDispersiveAgent
+│   └── TrainMeanFlowDispersiveAgent
+├── TrainReFlowAgent               # Rectified flow
+├── TrainConsistencyAgent          # Consistency distillation
+├── TrainDiffusionAgent            # DDPM/DDIM diffusion
+└── TrainGaussianAgent             # Simple Gaussian BC
+
+TrainPPOShortCutAgent (PPO base)
+├── TrainPPODriftingAgent          # Drifting PPO (state)
+├── TrainPPOMeanFlowAgent          # MeanFlow PPO (state)
+├── TrainPPOFlowAgent              # Generic flow PPO
+├── TrainPPODiffusionAgent         # Diffusion PPO
+├── TrainPPOGaussianAgent          # Gaussian PPO
+└── TrainPPOImgShortCutAgent       # ShortCut PPO (image)
+    ├── TrainPPOImgDriftingAgent   # Drifting PPO (image)
+    ├── TrainPPOImgMeanFlowAgent   # MeanFlow PPO (image)
+    ├── TrainPPOImgFlowAgent       # Flow PPO (image)
+    └── TrainPPOImgDiffusionAgent  # Diffusion PPO (image)
+
+TrainGRPODriftingAgent             # GRPO (critic-free, Drifting only)
+```
+
+---
+
+## 6. Configuration System
+
+All experiments are configured via Hydra YAML files organized by:
+
+```
+cfg/{env_suite}/{stage}/{task}/{config_name}.yaml
+```
+
+**Example paths:**
+```
+cfg/gym/pretrain/hopper-medium-v2/pre_drifting_mlp.yaml
+cfg/gym/finetune/hopper-v2/ft_ppo_drifting_mlp.yaml
+cfg/gym/finetune/hopper-v2/ft_grpo_drifting_mlp.yaml
+cfg/gym/eval/hopper-v2/eval_drifting_mlp.yaml
+cfg/robomimic/pretrain/can/pre_drifting_mlp_img.yaml
+```
+
+**Key config sections:**
+
+| Section | Purpose | Example Keys |
+|---------|---------|--------------|
+| `model` | Neural network architecture | `_target_`, `mlp_dims`, `act_min/max` |
+| `train` | Training hyperparameters | `n_epochs`, `batch_size`, `learning_rate` |
+| `env` | Environment settings | `n_envs`, `name`, `max_episode_steps` |
+| `train_dataset` | Data loading config | `_target_`, `dataset_path`, `horizon_steps` |
+| `ema` | EMA configuration | `decay` |
+
+---
+
+## 7. Drifting Policy vs Mean Flow Policy
+
+### 7.1 Mathematical Foundations
+
+**Mean Flow Policy** learns a velocity field `v(x, t)` that transports noise `x_0 ~ N(0,I)` to data `x_1` over time `t ∈ [0,1]`:
+
+```
+dx/dt = v(x, t)     →   x_1 = x_0 + ∫₀¹ v(x_t, t) dt
+```
+
+At inference, this integral is approximated with multiple Euler steps (typically 5 NFE).
+
+**Drifting Policy** collapses this into a single step by training a network to directly predict the final action, then applying a drift correction field:
+
+```
+x_pred = f_θ(x_0, t=1, r=0, cond)           # Single forward pass
+V = compute_V(x_pred, x_expert)              # Drift field toward expert data
+target = (x_pred + V).detach()               # Drifted target
+loss = MSE(x_pred, target)                   # Self-supervised refinement
+```
+
+### 7.2 Code-Level Comparison
+
+| Aspect | MeanFlow | Drifting |
+|--------|----------|---------|
+| **Core file** | `model/flow/meanflow.py` | `model/drifting/drifting.py` |
+| **Network** | `MeanFlowMLP` | `MeanFlowMLP` (same backbone) |
+| **NFE at inference** | 5 (Euler steps) | 1 (single forward) |
+| **Loss** | Velocity matching MSE | Drift-corrected MSE |
+| **Training `t`** | Sampled uniformly `t ~ U(0,1)` | Fixed `t=1.0` |
+| **Training `r`** | Sampled or fixed | Fixed `r=0.0` |
+| **PPO wrapper** | `PPOMeanFlow` | `PPODrifting` |
+| **GRPO wrapper** | — | `GRPODrifting` |
+| **Pretrain agent** | `TrainMeanFlowAgent` | `TrainDriftingAgent` |
+| **Eval agent** | `eval_meanflow_agent.py` | `eval_drifting_agent.py` |
+
+### 7.3 Key Difference: Drift Field Computation
+
+```python
+# In DriftingPolicy.compute_V():
+# 1. Compute pairwise distances between predictions and expert data
+diff = x.unsqueeze(1) - y_pos.unsqueeze(0)    # [B, B, T_a, D_a]
+dist_sq = (diff ** 2).sum(dim=(-1, -2))         # [B, B]
+
+# 2. RBF kernel weighting
+weights = torch.exp(-dist_sq / (2 * bandwidth**2))  # [B, B]
+
+# 3. Optional self-masking
+if mask_self:
+    weights.fill_diagonal_(0)
+
+# 4. Weighted drift toward expert data
+weights_norm = weights / (weights.sum(dim=1, keepdim=True) + eps)
+V_pos = (weights_norm.unsqueeze(-1).unsqueeze(-1) * diff).sum(dim=1)
+
+# 5. Scale by drift coefficient
+V_total = drift_coef * V_pos - neg_drift_coef * V_neg
+```
+
+---
+
+## 8. Fine-Tuning Architectures
+
+### 8.1 PPO Fine-Tuning
+
+Both MeanFlow and Drifting use the same PPO framework (`PPOFlow` base class), differing only in:
+- **Log-probability computation**: Drifting uses a single Gaussian transition; MeanFlow chains multiple steps
+- **Inference steps**: Drifting forces `inference_steps=1`
+- **Chain length**: Drifting chains are always length 2 (noise + action)
+
+### 8.2 GRPO Fine-Tuning (Drifting Only)
+
+GRPO is unique to Drifting Policy and offers:
+- **No critic network** — reduces parameters and avoids value estimation bias
+- **Group-relative advantages** — Z-score normalization within trajectory groups
+- **Analytical KL divergence** — eliminates sampling variance in divergence estimation
+- **Tanh-Normal distribution** — proper bounded action support with Jacobian correction
+
+---
+
+## 9. Environment Integration
+
+### 9.1 Supported Environment Suites
+
+| Suite | Tasks | Observation | Action Space |
+|-------|-------|-------------|--------------|
+| **Gym (D4RL)** | HalfCheetah, Hopper, Walker2d, Ant, Humanoid | State vector | Continuous |
+| **Franka Kitchen** | kitchen-mixed, kitchen-complete, kitchen-partial | State vector | Continuous |
+| **RoboMimic** | Can, Lift, Transport, Square | RGB images + state | Continuous |
+| **FurnitureBench** | one_leg_low, one_leg_high, square_table | RGB images + state | Continuous |
+| **D3IL** | Avoid, Aligning, Pushing, Sorting, Stacking | State vector | Continuous |
+
+### 9.2 Observation Processing
+
+State-based tasks use a simple dictionary:
+```python
+cond = {"state": Tensor[B, D_obs]}
+```
+
+Image-based tasks use a multi-modal dictionary:
+```python
+cond = {
+    "rgb": Tensor[B, C, H, W],       # RGB image
+    "state": Tensor[B, D_proprio],     # Proprioceptive state
 }
 ```
 
----
-
-## Acknowledgments
-
-DMPO builds upon several excellent open-source projects:
-- [Diffusion Policy](https://github.com/real-stanford/diffusion_policy)
-- [ReinFlow](https://github.com/ReinFlow/ReinFlow)
-- [DPPO](https://github.com/irom-princeton/dppo)
-- [Robomimic](https://github.com/ARISE-Initiative/robomimic)
-- [MeanFlow / Shortcut Models](https://github.com/kvfrans/shortcut-models)
-
-See `THIRD_PARTY_LICENSES.md` for complete dependency attributions.
-
----
-
-## License
-
-Released under the MIT License. See [LICENSE](LICENSE) for details.
-
----
-
-## Contact
-
-- Submit issues: [GitHub Issues](https://github.com/Guowei-Zou/dmpo-release/issues)
-- Email: zougw3@mail2.sysu.edu.cn (Guowei Zou)
-
----
-
-## Star History
-
-<div align="center">
-
-[![Star History Chart](https://api.star-history.com/svg?repos=guowei-zou/dmpo-release&type=Date)](https://star-history.com/#guowei-zou/dmpo-release&Date)
-
-</div>
+The image PPO agents (`TrainPPOImgDriftingAgent`, etc.) handle image augmentation via `RandomShiftsAug` and support gradient accumulation for memory efficiency.
