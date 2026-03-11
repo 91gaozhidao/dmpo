@@ -1,6 +1,6 @@
 ######################################################################
 env_suite: robomimic
-env: transport
+env_name: transport
 
 # future action forecasts
 action_dim: 14
@@ -28,8 +28,8 @@ hydra:
   run:
     dir: ${logdir}
 _target_: agent.finetune.grpo.train_grpo_drifting_agent.TrainGRPODriftingAgent
-name: ${env}_ft_grpo_drifting_mlp_img
-logdir: ${oc.env:REINFLOW_LOG_DIR}/robomimic/finetune/${env}/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
+name: ${env_name}_ft_grpo_drifting_mlp_img
+logdir: ${oc.env:REINFLOW_LOG_DIR}/robomimic/finetune/${env_name}/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
 base_policy_path: null
 
 # GRPO parameters
@@ -54,7 +54,7 @@ train:
 
 wandb:
   entity: ${oc.env:REINFLOW_WANDB_ENTITY}
-  project: DM1-robomimic-${env}-finetune
+  project: DM1-robomimic-${env_name}-finetune
   run: ${now:%Y-%m-%d}_${now:%H-%M-%S}_${name}_grpo
   offline_mode: false
 
@@ -67,7 +67,7 @@ model:
 
 env:
   _target_: env.gym_utils.make_async
-  env_name: ${env}
+  env_name: ${env_name}
   env_type: ${env_suite}
   n_envs: 25
   max_episode_steps: 700
