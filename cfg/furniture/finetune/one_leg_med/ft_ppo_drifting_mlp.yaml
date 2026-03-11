@@ -1,0 +1,138 @@
+defaults:
+  - _self_
+hydra:
+  run:
+    dir: ${logdir}
+_target_: agent.finetune.reinflow.train_ppo_drifting_agent.TrainPPODriftingAgent
+
+name: ${env_name}_ft_ppo_drifting_mlp_ta${horizon_steps}_seed${seed}
+logdir: ${oc.env:REINFLOW_LOG_DIR}/furniture/finetune/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
+base_policy_path: null  # specify path to pre-trained drifting model
+normalization_path: ${oc.env:REINFLOW_DATA_DIR}/furniture/${env.specific.furniture}_${env.specific.randomness}/normalization.pth
+
+seed: 42
+device: cuda:0
+env_name: ${env.specific.furniture}_${env.specific.randomness}_dim
+obs_dim: 58
+action_dim: 10
+denoising_steps: 1  # Drifting Policy is 1-NFE
+ft_denoising_steps: 1
+cond_steps: 1
+horizon_steps: 8
+act_steps: 8
+min_std: 0.05
+max_std: 0.12
+
+env:
+  n_envs: 1000
+  name: ${env_name}
+  env_type: furniture
+  max_episode_steps: 700
+  best_reward_threshold_for_success: 1
+  specific:
+    headless: true
+    furniture: one_leg
+    randomness: med
+    normalization_path: ${normalization_path}
+    obs_steps: ${cond_steps}
+    act_steps: ${act_steps}
+    sparse_reward: true
+
+wandb:
+  entity: ${oc.env:REINFLOW_WANDB_ENTITY}
+  project: DM1-furniture-${env.specific.furniture}-${env.specific.randomness}-finetune
+  run: ${now:%H-%M-%S}_${name}
+
+train:
+  n_train_itr: 1000
+  n_critic_warmup_itr: 1
+  n_steps: ${eval:'round(${env.max_episode_steps} / ${act_steps})'}
+  gamma: 0.999
+  actor_lr: 1e-5
+  actor_weight_decay: 0
+  actor_lr_scheduler:
+    type: cosine
+    first_cycle_steps: 100
+    warmup_steps: 10
+    min_lr: 1e-5
+  critic_lr: 4.5e-4
+  critic_weight_decay: 1.0e-05
+  critic_lr_scheduler:
+    type: cosine
+    first_cycle_steps: 100
+    warmup_steps: 25
+    min_lr: 3e-4
+  save_model_freq: 100
+  val_freq: 10
+  render:
+    freq: 1
+    num: 0
+  reward_scale_running: true
+  reward_scale_const: 1.0
+  gae_lambda: 0.95
+  batch_size: ${eval:'round(${env.n_envs} * ${train.n_steps} / 2)'}
+  update_epochs: 5
+  vf_coef: 0.5
+  ent_coef: 0.01
+  target_kl: 0.01
+  lr_schedule: fixed
+  repeat_samples: true
+  verbose: false
+  clip_intermediate_actions: true
+  account_for_initial_stochasticity: true
+  max_noise_hold_ratio: 0.35
+  max_noise_decay_ratio: 0.7
+  max_grad_norm: 25.0
+  use_bc_loss: true
+  bc_loss_type: W2
+  bc_loss_coeff: 0.05
+model:
+  _target_: model.drifting.ft_ppo.ppodrifting.PPODrifting
+  device: ${device}
+  actor_policy_path: ${base_policy_path}
+  policy:
+    _target_: model.flow.mlp_meanflow.MeanFlowMLP
+    action_dim: ${action_dim}
+    horizon_steps: ${horizon_steps}
+    cond_dim: ${eval:'${obs_dim} * ${cond_steps}'}
+    time_dim: 16
+    r_embedding_dim: 16
+    mlp_dims: [512, 512, 512]
+    cond_mlp_dims: [64, 16]
+    activation_type: Mish
+    out_activation_type: Identity
+    use_layernorm: false
+    residual_style: true
+  critic:
+    _target_: model.common.critic.CriticObs
+    cond_dim: ${eval:'${obs_dim} * ${cond_steps}'}
+    mlp_dims: [256, 256, 256]
+    activation_type: Mish
+    residual_style: true
+  act_dim: ${action_dim}
+  horizon_steps: ${horizon_steps}
+  act_min: -1
+  act_max: 1
+  obs_dim: ${obs_dim}
+  cond_steps: ${cond_steps}
+  noise_scheduler_type: learn
+  inference_steps: ${denoising_steps}
+  ft_denoising_steps: ${ft_denoising_steps}
+  randn_clip_value: 3
+  min_sampling_denoising_std: ${min_std}
+  min_logprob_denoising_std: ${min_std}
+  max_logprob_denoising_std: ${max_std}
+  logprob_min: -1.0
+  logprob_max: 1.0
+  clip_ploss_coef: 0.01
+  clip_ploss_coef_base: 0.001
+  clip_ploss_coef_rate: 3
+  clip_vloss_coef: null
+  denoised_clip_value: 1.0
+  time_dim_explore: 16
+  learn_explore_time_embedding: true
+  use_time_independent_noise: true
+  noise_hidden_dims: [256, 256, 256]
+  logprob_debug_sample: false
+  logprob_debug_recalculate: false
+  explore_net_activation_type: Tanh

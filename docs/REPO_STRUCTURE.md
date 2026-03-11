@@ -140,6 +140,19 @@ dmpo/
 | `train_ppo_shortcut_img_agent.py`  | Shortcut 策略 ReinFlow PPO（图像）      |
 | `train_ppo_drifting_agent.py`      | Drifting 策略 ReinFlow PPO（状态/图像） |
 
+**`agent/finetune/grpo/`** — GRPO 微调（无 Critic）
+
+| 文件                              | 说明                                         |
+| --------------------------------- | -------------------------------------------- |
+| `buffer.py`                       | GRPO 组级经验缓冲区（Z-score 优势标准化）    |
+| `train_grpo_drifting_agent.py`    | Drifting 策略 GRPO 微调（无 Critic/Value 网络）|
+
+**`agent/finetune/dpro/`** — DPRO 微调
+
+| 文件                              | 说明                          |
+| --------------------------------- | ----------------------------- |
+| `train_dpro_drifting_agent.py`    | Drifting 策略 DPRO 微调       |
+
 **`agent/finetune/diffusion_baselines/`** — 扩散基线微调
 
 | 文件                            | 说明                  |
@@ -224,7 +237,6 @@ dmpo/
 | `improved_meanflow.py`   | 改进版 MeanFlow（含 Dispersive 正则化） |
 | `shortcutflow.py`        | Shortcut Flow 算法实现                  |
 | `shortcut_dispersive.py` | 带 Dispersive Loss 的 Shortcut Flow     |
-| `drifting.py`            | **Drifting Policy** 核心实现 (1-NFE)    |
 | `consistency.py`         | Consistency 模型实现                    |
 
 **`model/flow/ft_ppo/`** — Flow 模型 PPO 微调
@@ -241,6 +253,26 @@ dmpo/
 | ---------- | -------------------------- |
 | `fql.py`   | Flow Q-Learning (FQL) 实现 |
 | `utils.py` | 基线微调辅助工具           |
+
+#### `model/drifting/` — Drifting Policy 模型
+
+**核心**: 1-NFE 单步生成策略，将均值漂移前置到训练阶段。
+
+| 文件                     | 说明                                                    |
+| ------------------------ | ------------------------------------------------------- |
+| `drifting.py`            | **DriftingPolicy** 核心实现：RBF 漂移场 + 单步推理      |
+
+**`model/drifting/ft_ppo/`** — Drifting PPO 微调
+
+| 文件              | 说明                                               |
+| ----------------- | -------------------------------------------------- |
+| `ppodrifting.py`  | **PPODrifting**: 加入可学习探索噪声的 PPO 微调封装 |
+
+**`model/drifting/ft_grpo/`** — Drifting GRPO 微调（无 Critic）
+
+| 文件               | 说明                                                |
+| ------------------ | --------------------------------------------------- |
+| `grpodrifting.py`  | **GRPODrifting**: Tanh-Normal 策略 + 解析 KL 散度   |
 
 #### `model/loss/` — 损失函数
 
