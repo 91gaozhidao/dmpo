@@ -60,7 +60,7 @@ class TrainDriftingAgent(PreTrainAgent):
         """Compute Drifting Policy loss for training and validation."""
         # batch_data = (actions, observation) from StitchedSequenceDataset
         actions, obs = batch_data
-        cond = {"state": obs}
+        cond = obs
         loss = self.model.loss(x1=actions, cond=cond)
         return loss
 
