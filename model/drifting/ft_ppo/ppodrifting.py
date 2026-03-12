@@ -31,23 +31,26 @@ Gaussian policy suitable for PPO log-probability computation.
 
 import logging
 log = logging.getLogger(__name__)
-from model.flow.mlp_meanflow import MeanFlowMLP
 from model.flow.ft_ppo.ppoflow import PPOFlow
 import torch
 from torch import Tensor
 from torch.distributions import Normal
+from model.drifting.backbone.transformer_for_drifting import TransformerForDrifting
+from model.drifting.backbone.conditional_unet1d import ConditionalUnet1D
 
 
-class NoisyDriftingMLP(torch.nn.Module):
+class NoisyDriftingPolicy(torch.nn.Module):
     """
-    Noisy version of the Drifting Policy network for PPO fine-tuning.
+    Noisy version of the Drifting Policy backbone for PPO fine-tuning.
     
-    Wraps the pretrained MeanFlowMLP and adds learnable exploration noise.
-    The policy uses t=1.0, r=0.0 for single-step inference, then adds
-    Gaussian exploration noise for PPO training.
+    Wraps the pretrained backbone (Transformer or UNet1D) and adds learnable 
+    exploration noise. The policy uses t=1.0, r=0.0 implicitly for single-step 
+    inference, then adds Gaussian exploration noise for PPO training.
     """
     def __init__(self,
-                 policy: MeanFlowMLP,
+                 policy: torch.nn.Module,
+                 act_dim_total: int,
+                 cond_enc_dim: int,
                  denoising_steps,
                  learn_explore_noise_from,
                  inital_noise_scheduler_type,
@@ -62,6 +65,11 @@ class NoisyDriftingMLP(torch.nn.Module):
         super().__init__()
 
         self.policy = policy
+        self._is_transformer = isinstance(policy, TransformerForDrifting)
+        self._is_unet1d = isinstance(policy, ConditionalUnet1D)
+        
+        self.act_dim_total = act_dim_total
+        self.cond_enc_dim = cond_enc_dim
         self.denoising_steps = denoising_steps
         self.learn_explore_noise_from = learn_explore_noise_from
         self.device = device
@@ -91,13 +99,13 @@ class NoisyDriftingMLP(torch.nn.Module):
         # MLP for noise prediction
         self.use_time_independent_noise = use_time_independent_noise
         if use_time_independent_noise:
-            input_dim = policy.act_dim_total + policy.cond_enc_dim
+            input_dim = self.act_dim_total + self.cond_enc_dim
         else:
-            input_dim = policy.act_dim_total + policy.cond_enc_dim + time_dim_explore
+            input_dim = self.act_dim_total + self.cond_enc_dim + time_dim_explore
 
         from model.common.mlp import MLP
         self.mlp_logvar = MLP(
-            [input_dim] + noise_hidden_dims + [policy.act_dim_total],
+            [input_dim] + noise_hidden_dims + [self.act_dim_total],
             activation_type=activation_type,
             out_activation_type="Identity",
         ).to(device)
@@ -121,17 +129,27 @@ class NoisyDriftingMLP(torch.nn.Module):
         """
         B, Ta, Da = z.shape
 
-        # Single-step generation: t=1.0, r=0.0
-        t = torch.ones(B, device=self.device)
-        r = torch.zeros(B, device=self.device)
-
-        # Get deterministic action from the policy
-        action = self.policy(z, t, r, cond)
+        # Get deterministic action from the policy backbone
+        if self._is_transformer:
+            obs = cond['state']
+            if obs.dim() == 2:
+                obs = obs.unsqueeze(1)
+            action = self.policy(z, cond=obs)
+        elif self._is_unet1d:
+            obs_flat = cond['state'].view(B, -1)
+            action = self.policy(z, global_cond=obs_flat)
+        else:
+            raise ValueError(f"Unsupported backbone type: {type(self.policy)}")
 
         # Predict exploration noise
         if learn_exploration_noise and step is not None and step >= self.learn_explore_noise_from:
             action_flat = action.view(B, -1)
-            cond_encoded = self.policy.forward_encoder(cond)
+            
+            # Use basic state encoding if forward_encoder isn't available
+            if hasattr(self.policy, 'forward_encoder'):
+                cond_encoded = self.policy.forward_encoder(cond)
+            else:
+                cond_encoded = cond['state'].view(B, -1)
 
             if self.use_time_independent_noise:
                 noise_input = torch.cat([action_flat, cond_encoded], dim=-1)
@@ -232,8 +250,11 @@ class PPODrifting(PPOFlow):
 
     def init_actor_ft(self, policy_copy):
         """Initialize fine-tuning actor with noisy Drifting Policy."""
-        self.actor_ft = NoisyDriftingMLP(
+        cond_dim = self.obs_dim * self.cond_steps
+        self.actor_ft = NoisyDriftingPolicy(
             policy=policy_copy,
+            act_dim_total=self.act_dim_total,
+            cond_enc_dim=cond_dim,
             denoising_steps=self.inference_steps,
             learn_explore_noise_from=self.inference_steps - self.ft_denoising_steps,
             inital_noise_scheduler_type=self.noise_scheduler_type,

@@ -42,7 +42,9 @@ import numpy as np
 import torch.nn.functional as F
 from torch import Tensor
 from collections import namedtuple
-from model.flow.mlp_meanflow import MeanFlowMLP
+from model.drifting.backbone.transformer_for_drifting import TransformerForDrifting
+from model.drifting.backbone.conditional_unet1d import ConditionalUnet1D
+from model.drifting.backbone.vit_wrapper import DriftingViTWrapper
 
 log = logging.getLogger(__name__)
 Sample = namedtuple("Sample", "trajectories chains")
@@ -262,7 +264,7 @@ class DriftingPolicy(nn.Module):
 
     def __init__(
         self,
-        network: MeanFlowMLP,
+        network: nn.Module,
         device: torch.device,
         horizon_steps: int,
         action_dim: int,
@@ -283,7 +285,9 @@ class DriftingPolicy(nn.Module):
         Initialize DriftingPolicy.
 
         Args:
-            network: MeanFlowMLP network for action prediction
+            network: Backbone network for action prediction.
+                     Supported: TransformerForDrifting, ConditionalUnet1D,
+                     or any nn.Module with compatible forward signature.
             device: Device to run the model on
             horizon_steps: Number of steps in trajectory horizon
             action_dim: Dimension of action space
@@ -318,6 +322,52 @@ class DriftingPolicy(nn.Module):
         # Drifting-specific parameters
         self.temperatures = temperatures
         self.mask_self = mask_self
+
+        # Detect backbone type for dispatch
+        self._is_transformer = isinstance(network, TransformerForDrifting)
+        self._is_unet1d = isinstance(network, ConditionalUnet1D)
+        self._is_vit_wrapper = isinstance(network, DriftingViTWrapper)
+
+    def _call_network(self, x: Tensor, cond: dict) -> Tensor:
+        """
+        Dispatch forward pass to the backbone network with the correct signature.
+
+        Drifting Policy is 1-NFE, so t and r are always constants (1.0 and 0.0).
+        Different backbones have different forward() signatures:
+        - TransformerForDrifting: forward(sample, cond=obs_tensor)
+        - ConditionalUnet1D: forward(sample, timestep=None, global_cond=obs_flat)
+        - MeanFlowMLP (legacy fallback): forward(action, time, r, cond)
+
+        Args:
+            x: (B, Ta, Da) input noise or action
+            cond: dict with 'state' key for observations
+
+        Returns:
+            (B, Ta, Da) predicted action
+        """
+        B = x.shape[0]
+
+        if self._is_transformer:
+            # TransformerForDrifting: forward(sample, cond)
+            # cond expects (B, T_cond, cond_dim)
+            obs = cond['state']  # (B, To, Do)
+            if obs.dim() == 2:
+                obs = obs.unsqueeze(1)  # (B, 1, Do)
+            return self.network(x, cond=obs)
+
+        elif self._is_unet1d:
+            # ConditionalUnet1D: forward(sample, local_cond, global_cond)
+            # Drifting has no timestep; pass obs as global_cond
+            obs_flat = cond['state'].view(B, -1)  # (B, Do*To)
+            return self.network(x, global_cond=obs_flat)
+
+        elif self._is_vit_wrapper:
+            # Wrapper handles visual features itself
+            return self.network(x, cond=cond)
+
+        else:
+            raise ValueError(f"Unsupported backbone type: {type(self.network)}. "
+                             f"DriftingPolicy only supports TransformerForDrifting, ConditionalUnet1D, or DriftingViTWrapper.")
 
     def compute_V_field(
         self, x: Tensor, y_pos: Tensor, y_neg: Tensor, T: float, mask_self: bool = True
@@ -375,12 +425,8 @@ class DriftingPolicy(nn.Module):
         # Generate initial noise as input
         x_gen = torch.randn((B,) + self.data_shape, device=self.device)
 
-        # Use t=1.0, r=0.0 for single-step prediction
-        t = torch.ones(B, device=self.device)
-        r = torch.zeros(B, device=self.device)
-
         # Network prediction (the current generated action)
-        x = self.network(x_gen, t, r, cond)
+        x = self._call_network(x_gen, cond)
 
         # Flatten to (B, Ta*Da) for drift field computation
         x_flat = x.reshape(B, -1)
@@ -427,11 +473,8 @@ class DriftingPolicy(nn.Module):
         if z is None:
             z = torch.randn((B,) + self.data_shape, device=self.device)
 
-        # Single-step forward pass: t=1.0, r=0.0
-        t = torch.ones(B, device=self.device)
-        r = torch.zeros(B, device=self.device)
-
-        action = self.network(z, t, r, cond)
+        # Single-step forward pass
+        action = self._call_network(z, cond)
         action = action.clamp(*self.act_range)
 
         # Runtime assertion: verify action boundaries before env interaction

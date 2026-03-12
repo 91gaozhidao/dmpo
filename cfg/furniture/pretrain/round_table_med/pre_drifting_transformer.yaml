@@ -1,0 +1,77 @@
+defaults:
+  - _self_
+hydra:
+  run:
+    dir: ${logdir}
+_target_: agent.pretrain.train_drifting_agent.TrainDriftingAgent
+
+name: ${env}_pre_drifting_transformer_ta${horizon_steps}
+logdir: ${oc.env:REINFLOW_LOG_DIR}/furniture/pretrain/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
+train_dataset_path: ${oc.env:REINFLOW_DATA_DIR}/furniture/${task}_${randomness}/train.npz
+
+seed: 42
+device: cuda:0
+task: round_table
+randomness: med
+env: ${task}_${randomness}_dim
+obs_dim: 44
+action_dim: 10
+horizon_steps: 8
+cond_steps: 1
+
+wandb:
+  entity: ${oc.env:REINFLOW_WANDB_ENTITY}
+  project: DM1-furniture-${task}-${randomness}-pretrain
+  run: ${now:%H-%M-%S}_${name}
+
+train:
+  n_epochs: 8000
+  batch_size: 256
+  learning_rate: 1e-4
+  weight_decay: 1e-6
+  lr_scheduler:
+    first_cycle_steps: 10000
+    warmup_steps: 100
+    min_lr: 1e-5
+  epoch_start_ema: 20
+  update_ema_freq: 10
+  save_model_freq: 1000
+
+model:
+  _target_: model.drifting.drifting.DriftingPolicy
+  network:
+    _target_: model.drifting.backbone.transformer_for_drifting.TransformerForDrifting
+    input_dim: ${action_dim}
+    output_dim: ${action_dim}
+    horizon: ${horizon_steps}
+    n_obs_steps: ${cond_steps}
+    cond_dim: ${eval:'${obs_dim} * ${cond_steps}'}
+    n_layer: 4
+    n_head: 4
+    n_emb: 256
+    p_drop_emb: 0.1
+    p_drop_attn: 0.1
+    causal_attn: true
+    time_as_cond: false
+    obs_as_cond: true
+  device: ${device}
+  horizon_steps: ${horizon_steps}
+  action_dim: ${action_dim}
+  act_min: -1
+  act_max: 1
+  obs_dim: ${obs_dim}
+  max_denoising_steps: 1  # Drifting Policy is 1-NFE
+  seed: ${seed}
+  drift_coef: 0.1
+  neg_drift_coef: 0.05
+  mask_self: false
+
+ema:
+  decay: 0.995
+
+train_dataset:
+  _target_: agent.dataset.sequence.StitchedSequenceDataset
+  dataset_path: ${train_dataset_path}
+  horizon_steps: ${horizon_steps}
+  cond_steps: ${cond_steps}
+  device: ${device}
