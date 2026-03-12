@@ -34,7 +34,6 @@ Environments that do not support strict homogeneous reset (seed-based)
 fall back to treating the batch of parallel trajectories as a single group.
 """
 
-import os
 import logging
 log = logging.getLogger(__name__)
 from tqdm import tqdm
@@ -99,121 +98,94 @@ class TrainGRPODriftingAgent(TrainAgent):
             f"update_epochs={self.update_epochs}"
         )
 
+    def _obs_to_device(self, obs_venv):
+        return {
+            key: torch.from_numpy(value).float().to(self.device)
+            for key, value in obs_venv.items()
+        }
+
+    def _obs_to_cpu(self, obs_venv):
+        return {
+            key: torch.from_numpy(value).float()
+            for key, value in obs_venv.items()
+        }
+
+    def _seeded_reset(self):
+        if not self.use_homogeneous_reset:
+            return self.reset_env_all()
+
+        seed = int(np.random.randint(0, 100000))
+        options_venv = [{"seed": seed} for _ in range(self.n_envs)]
+        return self.reset_env_all(options_venv=options_venv)
+
     def collect_group_trajectories(self):
         """
-        Collect G trajectories from the same initial state.
+        Collect one rollout batch and group trajectories sequentially.
 
-        If use_homogeneous_reset is True, all G trajectories share the
-        same environment seed for deterministic initial state. Otherwise,
-        the G parallel environments are treated as a single group
-        (approximate GRPO).
+        If use_homogeneous_reset is True, all parallel environments are
+        reset with the same seed so the buffer can chunk them into GRPO
+        groups of size `group_size`. Otherwise, the grouping is only an
+        approximation based on collection order.
         """
         self.buffer.clear()
         self.model.eval()
+        obs_venv = self._seeded_reset()
 
-        if self.use_homogeneous_reset:
-            # Strict homogeneous reset: same seed for all G trajectories
-            seed = np.random.randint(0, 100000)
+        traj_obs = [
+            {key: [] for key in obs_venv.keys()}
+            for _ in range(self.n_envs)
+        ]
+        traj_acts = [[] for _ in range(self.n_envs)]
+        traj_log_probs = [[] for _ in range(self.n_envs)]
+        episodic_returns = np.zeros(self.n_envs)
+        done_flags = np.zeros(self.n_envs, dtype=bool)
 
-            for g in range(self.group_size):
-                # Reset environment to the same initial state
-                self.venv.seed([seed] * self.n_envs)
-                obs_venv = self.reset_env_all()
+        for step in range(self.n_steps):
+            with torch.no_grad():
+                cond = self._obs_to_device(obs_venv)
+                actions, log_probs = self.model.actor.sample_action(cond)
 
-                traj_obs = []
-                traj_acts = []
-                traj_log_probs = []
-                episodic_returns = np.zeros(self.n_envs)
-                done_flags = np.zeros(self.n_envs, dtype=bool)
+            obs_cpu = self._obs_to_cpu(obs_venv)
+            actions_cpu = actions.cpu()
+            log_probs_cpu = log_probs.cpu()
 
-                for step in range(self.n_steps):
-                    with torch.no_grad():
-                        cond = {
-                            "state": torch.from_numpy(obs_venv["state"])
-                            .float()
-                            .to(self.device)
-                        }
-                        actions, log_probs = self.model.actor.sample_action(cond)
+            active_envs = np.where(~done_flags)[0]
+            for env_idx in active_envs:
+                for key, value in obs_cpu.items():
+                    traj_obs[env_idx][key].append(value[env_idx])
+                traj_acts[env_idx].append(actions_cpu[env_idx])
+                traj_log_probs[env_idx].append(log_probs_cpu[env_idx])
 
-                    action_np = actions[:, :self.act_steps].cpu().numpy()
-                    next_obs, rewards, terminated, truncated, info = self.venv.step(
-                        action_np
-                    )
+            action_np = actions[:, :self.act_steps].cpu().numpy()
+            if done_flags.any():
+                action_np[done_flags] = 0.0
+            next_obs, rewards, terminated, truncated, info = self.venv.step(
+                action_np
+            )
 
-                    # Store transitions for non-done environments
-                    traj_obs.append(
-                        torch.from_numpy(obs_venv["state"]).float()
-                    )
-                    traj_acts.append(actions.cpu())
-                    traj_log_probs.append(log_probs.cpu())
+            episodic_returns += rewards * (~done_flags)
+            done_flags |= terminated | truncated
+            obs_venv = next_obs
 
-                    episodic_returns += rewards * (~done_flags)
-                    done_flags |= terminated | truncated
-                    obs_venv = next_obs
+            if done_flags.all():
+                break
 
-                    if done_flags.all():
-                        break
+        for env_idx in range(self.n_envs):
+            if not traj_acts[env_idx]:
+                continue
 
-                # Store each environment's trajectory separately
-                obs_stack = torch.stack(traj_obs, dim=0)   # (T, n_envs, ...)
-                act_stack = torch.stack(traj_acts, dim=0)   # (T, n_envs, ...)
-                lp_stack = torch.stack(traj_log_probs, dim=0)  # (T, n_envs)
-
-                for env_idx in range(self.n_envs):
-                    self.buffer.add_trajectory(
-                        obs_seq=obs_stack[:, env_idx],
-                        act_seq=act_stack[:, env_idx],
-                        log_prob_seq=lp_stack[:, env_idx],
-                        episodic_return=float(episodic_returns[env_idx]),
-                    )
-        else:
-            # Approximate GRPO: treat parallel environments as one group
-            obs_venv = self.reset_env_all()
-
-            traj_obs = []
-            traj_acts = []
-            traj_log_probs = []
-            episodic_returns = np.zeros(self.n_envs)
-            done_flags = np.zeros(self.n_envs, dtype=bool)
-
-            for step in range(self.n_steps):
-                with torch.no_grad():
-                    cond = {
-                        "state": torch.from_numpy(obs_venv["state"])
-                        .float()
-                        .to(self.device)
-                    }
-                    actions, log_probs = self.model.actor.sample_action(cond)
-
-                action_np = actions[:, :self.act_steps].cpu().numpy()
-                next_obs, rewards, terminated, truncated, info = self.venv.step(
-                    action_np
-                )
-
-                traj_obs.append(
-                    torch.from_numpy(obs_venv["state"]).float()
-                )
-                traj_acts.append(actions.cpu())
-                traj_log_probs.append(log_probs.cpu())
-
-                episodic_returns += rewards * (~done_flags)
-                done_flags |= terminated | truncated
-                obs_venv = next_obs
-
-                if done_flags.all():
-                    break
-
-            obs_stack = torch.stack(traj_obs, dim=0)
-            act_stack = torch.stack(traj_acts, dim=0)
-            lp_stack = torch.stack(traj_log_probs, dim=0)
-
-            for env_idx in range(self.n_envs):
-                self.buffer.add_trajectory(
-                    obs_seq=obs_stack[:, env_idx],
-                    act_seq=act_stack[:, env_idx],
-                    log_prob_seq=lp_stack[:, env_idx],
-                    episodic_return=float(episodic_returns[env_idx]),
-                )
+            obs_seq = {
+                key: torch.stack(value, dim=0)
+                for key, value in traj_obs[env_idx].items()
+            }
+            act_seq = torch.stack(traj_acts[env_idx], dim=0)
+            log_prob_seq = torch.stack(traj_log_probs[env_idx], dim=0)
+            self.buffer.add_trajectory(
+                obs_seq=obs_seq,
+                act_seq=act_seq,
+                log_prob_seq=log_prob_seq,
+                episodic_return=float(episodic_returns[env_idx]),
+            )
 
         self.buffer.summarize_episode_reward()
 
@@ -243,7 +215,10 @@ class TrainGRPODriftingAgent(TrainAgent):
                 end = min(start + self.grpo_batch_size, N)
                 idx = perm[start:end]
 
-                batch_obs = {"state": all_obs["state"][idx]}
+                batch_obs = {
+                    key: value[idx]
+                    for key, value in all_obs.items()
+                }
                 batch_actions = all_actions[idx]
                 batch_advantages = all_advantages[idx]
                 batch_old_lps = all_old_lps[idx]

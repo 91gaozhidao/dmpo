@@ -28,6 +28,35 @@ try:
 except ImportError:
     Iterable = (tuple, list)
 
+DEFAULT_ROBOMIMIC_IMAGE_LOW_DIM_KEYS = [
+    "robot0_eef_pos",
+    "robot0_eef_quat",
+    "robot0_gripper_qpos",
+]
+DEFAULT_ROBOMIMIC_LOW_DIM_KEYS = DEFAULT_ROBOMIMIC_IMAGE_LOW_DIM_KEYS + ["object"]
+DEFAULT_ROBOMIMIC_IMAGE_KEYS = [
+    "agentview_image",
+    "robot0_eye_in_hand_image",
+]
+
+
+def _wrapper_arg(args, key, default=None):
+    if args is None:
+        return default
+    if hasattr(args, "get"):
+        return args.get(key, default)
+    return default
+
+
+def _sanitize_wrapper_args(args):
+    if args is None:
+        return {}
+    return {
+        key: value
+        for key, value in args.items()
+        if not str(key).startswith("_")
+    }
+
 def make_async(
     id,
     num_envs=1,
@@ -156,13 +185,25 @@ def make_async(
         if robomimic_env_cfg_path is not None:
             obs_modality_dict = {
                 "low_dim": (
-                    wrappers.robomimic_image.low_dim_keys
-                    if "robomimic_image" in wrappers
-                    else wrappers.robomimic_lowdim.low_dim_keys
+                    _wrapper_arg(
+                        wrappers.get("robomimic_image", None),
+                        "low_dim_keys",
+                        DEFAULT_ROBOMIMIC_IMAGE_LOW_DIM_KEYS,
+                    )
+                    if wrappers is not None and "robomimic_image" in wrappers
+                    else _wrapper_arg(
+                        wrappers.get("robomimic_lowdim", None) if wrappers is not None else None,
+                        "low_dim_keys",
+                        DEFAULT_ROBOMIMIC_LOW_DIM_KEYS,
+                    )
                 ),
                 "rgb": (
-                    wrappers.robomimic_image.image_keys
-                    if "robomimic_image" in wrappers
+                    _wrapper_arg(
+                        wrappers.get("robomimic_image", None),
+                        "image_keys",
+                        DEFAULT_ROBOMIMIC_IMAGE_KEYS,
+                    )
+                    if wrappers is not None and "robomimic_image" in wrappers
                     else None
                 ),
             }
@@ -204,7 +245,7 @@ def make_async(
         # add wrappers
         if wrappers is not None:
             for wrapper, args in wrappers.items():
-                env = wrapper_dict[wrapper](env, **args)
+                env = wrapper_dict[wrapper](env, **_sanitize_wrapper_args(args))
         return env
 
     def dummy_env_fn():
@@ -248,7 +289,12 @@ def make_async(
             "render.modes": ["human", "rgb_array", "depth_array"],
             "video.frames_per_second": 12,
         }
-        return MultiStep(env=env, n_obs_steps=wrappers.multi_step.n_obs_steps)
+        n_obs_steps = _wrapper_arg(
+            wrappers.get("multi_step", None) if wrappers is not None else None,
+            "n_obs_steps",
+            1,
+        )
+        return MultiStep(env=env, n_obs_steps=n_obs_steps)
 
     env_fns = [_make_env for _ in range(num_envs)]
     return (

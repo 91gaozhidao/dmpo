@@ -35,10 +35,13 @@ the Gaussian mean, and a learnable log-std parameter provides exploration.
 
 import copy
 import logging
+import os
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import hydra
+from omegaconf import OmegaConf
 from torch.distributions import Normal
 from model.drifting.drifting import DriftingPolicy
 
@@ -48,6 +51,138 @@ log = logging.getLogger(__name__)
 LOG_2 = np.log(2)
 TANH_CLIP_THRESHOLD = 0.999999
 JACOBIAN_EPS = 1e-6
+
+
+def _find_run_config_path(checkpoint_path: str) -> str:
+    checkpoint_path = os.path.abspath(checkpoint_path)
+    search_dir = os.path.dirname(checkpoint_path)
+    checked = set()
+
+    for _ in range(4):
+        candidate = os.path.join(search_dir, ".hydra", "config.yaml")
+        if candidate not in checked and os.path.exists(candidate):
+            return candidate
+        checked.add(candidate)
+        parent_dir = os.path.dirname(search_dir)
+        if parent_dir == search_dir:
+            break
+        search_dir = parent_dir
+
+    raise FileNotFoundError(
+        f"Could not find a sibling Hydra config for checkpoint: {checkpoint_path}"
+    )
+
+
+def _build_drifting_policy_cfg(run_cfg, device: torch.device):
+    model_cfg = run_cfg.model
+    model_target = model_cfg.get("_target_")
+
+    if model_target == "model.drifting.drifting.DriftingPolicy":
+        drifting_cfg = OmegaConf.create(
+            OmegaConf.to_container(model_cfg, resolve=True)
+        )
+    elif model_target == "model.drifting.ft_ppo.ppodrifting.PPODrifting":
+        drifting_cfg = OmegaConf.create(
+            {
+                "_target_": "model.drifting.drifting.DriftingPolicy",
+                "network": OmegaConf.to_container(model_cfg.policy, resolve=True),
+                "device": str(device),
+                "horizon_steps": model_cfg.horizon_steps,
+                "action_dim": model_cfg.act_dim,
+                "act_min": model_cfg.act_min,
+                "act_max": model_cfg.act_max,
+                "obs_dim": model_cfg.obs_dim,
+                "max_denoising_steps": 1,
+                "seed": run_cfg.get("seed", 0),
+            }
+        )
+    else:
+        raise ValueError(
+            "Continuous GRPO can only bootstrap from DriftingPolicy or PPO "
+            f"Drifting checkpoints, but found model target: {model_target}"
+        )
+
+    drifting_cfg["device"] = str(device)
+    return drifting_cfg
+
+
+def _extract_prefixed_state_dict(state_dict, prefix: str, replacement: str = ""):
+    extracted = {}
+    for key, value in state_dict.items():
+        if key.startswith(prefix):
+            extracted[f"{replacement}{key[len(prefix):]}"] = value
+    return extracted if extracted else None
+
+
+def _extract_drifting_state_dict(checkpoint, use_ema: bool):
+    state_dict_candidates = []
+    if use_ema and isinstance(checkpoint.get("ema"), dict):
+        state_dict_candidates.append(("ema", checkpoint["ema"]))
+    if isinstance(checkpoint.get("model"), dict):
+        state_dict_candidates.append(("model", checkpoint["model"]))
+    if isinstance(checkpoint, dict) and any(
+        isinstance(value, torch.Tensor) for value in checkpoint.values()
+    ):
+        state_dict_candidates.append(("checkpoint", checkpoint))
+
+    for source_name, state_dict in state_dict_candidates:
+        if any(key.startswith("network.") for key in state_dict):
+            return state_dict, source_name
+
+        for prefix, replacement in (
+            ("actor.drifting_policy.", ""),
+            ("actor_ft.policy.", "network."),
+            ("actor_old.", "network."),
+            ("actor_ref.drifting_policy.", ""),
+        ):
+            extracted = _extract_prefixed_state_dict(
+                state_dict, prefix=prefix, replacement=replacement
+            )
+            if extracted is not None:
+                return extracted, f"{source_name}:{prefix}"
+
+    raise ValueError(
+        "Could not recover a DriftingPolicy state dict from checkpoint. "
+        f"Available top-level keys: {list(checkpoint.keys())}"
+    )
+
+
+def _load_drifting_policy_from_checkpoint(
+    actor_policy_path: str,
+    device: torch.device,
+    use_ema: bool = True,
+) -> DriftingPolicy:
+    if not actor_policy_path:
+        raise ValueError(
+            "Continuous GRPO requires `actor_policy_path` to bootstrap the "
+            "drifting backbone."
+        )
+
+    checkpoint = torch.load(actor_policy_path, map_location=device)
+    run_cfg = OmegaConf.load(_find_run_config_path(actor_policy_path))
+    drifting_cfg = _build_drifting_policy_cfg(run_cfg, device=device)
+    drifting_policy = hydra.utils.instantiate(drifting_cfg).to(device)
+
+    drifting_state_dict, source_name = _extract_drifting_state_dict(
+        checkpoint, use_ema=use_ema
+    )
+    missing_keys, unexpected_keys = drifting_policy.load_state_dict(
+        drifting_state_dict,
+        strict=False,
+    )
+    if missing_keys or unexpected_keys:
+        raise ValueError(
+            "Failed to load drifting backbone from checkpoint "
+            f"`{actor_policy_path}` ({source_name}). "
+            f"Missing keys: {missing_keys}. Unexpected keys: {unexpected_keys}."
+        )
+
+    log.info(
+        "Loaded DriftingPolicy backbone for continuous GRPO from %s (%s)",
+        actor_policy_path,
+        source_name,
+    )
+    return drifting_policy.eval()
 
 
 def _tanh_jacobian_correction(u):
@@ -91,7 +226,20 @@ class NoisyDriftingPolicy(nn.Module):
         self.horizon_steps = horizon_steps
         # Independent learnable log-std for the full action space
         self.log_std = nn.Parameter(
-            torch.full((horizon_steps * action_dim,), init_log_std)
+            torch.full(
+                (horizon_steps * action_dim,),
+                init_log_std,
+                device=drifting_policy.device,
+            )
+        )
+        self.register_buffer(
+            "mean_latent",
+            torch.zeros(
+                1,
+                horizon_steps,
+                action_dim,
+                device=drifting_policy.device,
+            ),
         )
 
     def forward(self, cond: dict):
@@ -105,7 +253,9 @@ class NoisyDriftingPolicy(nn.Module):
             mean: (B, Ta, Da) deterministic action from Drifting Policy
             std: (Ta*Da,) exploration standard deviation
         """
-        mean = self.drifting_policy.sample(cond).trajectories
+        batch_size = next(iter(cond.values())).shape[0]
+        z = self.mean_latent.expand(batch_size, -1, -1)
+        mean = self.drifting_policy.predict(cond, z=z, clip_actions=False)
         std = self.log_std.exp()
         return mean, std
 
@@ -122,7 +272,7 @@ class NoisyDriftingPolicy(nn.Module):
         """
         mean, std = self.forward(cond)
         B = mean.shape[0]
-        mean_flat = mean.view(B, -1)  # (B, Ta*Da)
+        mean_flat = mean.reshape(B, -1)  # (B, Ta*Da)
         dist = Normal(mean_flat, std.expand(B, -1))
         return dist, mean
 
@@ -143,7 +293,7 @@ class NoisyDriftingPolicy(nn.Module):
         """
         dist, _ = self.get_distribution(cond)
         B = action.shape[0]
-        action_flat = action.view(B, -1)  # (B, Ta*Da)
+        action_flat = action.reshape(B, -1)  # (B, Ta*Da)
 
         # Inverse tanh to recover unbounded action
         action_clipped = torch.clamp(action_flat, -TANH_CLIP_THRESHOLD, TANH_CLIP_THRESHOLD)
@@ -235,7 +385,11 @@ class GRPODrifting(nn.Module):
     reference policies.
     """
 
-    def __init__(self, actor: NoisyDriftingPolicy,
+    def __init__(self, actor: NoisyDriftingPolicy = None,
+                 actor_policy_path: str = None,
+                 device: str = "cpu",
+                 init_log_std: float = -0.5,
+                 use_ema: bool = True,
                  beta: float = 0.01,
                  epsilon: float = 0.2,
                  act_min: float = -1.0,
@@ -243,18 +397,37 @@ class GRPODrifting(nn.Module):
         """
         Args:
             actor: NoisyDriftingPolicy to optimize
+            actor_policy_path: path to a drifting pretrain / PPO checkpoint
+            device: device used for the actor and reference actor
+            init_log_std: initial exploration std for the GRPO actor
+            use_ema: whether to prefer the EMA weights when available
             beta: KL penalty coefficient
             epsilon: PPO-style clipping range
             act_min: Minimum action value for clipping
             act_max: Maximum action value for clipping
         """
         super().__init__()
-        self.actor = actor
+        device = torch.device(device)
+
+        if actor is None:
+            drifting_policy = _load_drifting_policy_from_checkpoint(
+                actor_policy_path=actor_policy_path,
+                device=device,
+                use_ema=use_ema,
+            )
+            actor = NoisyDriftingPolicy(
+                drifting_policy=drifting_policy,
+                action_dim=drifting_policy.action_dim,
+                horizon_steps=drifting_policy.horizon_steps,
+                init_log_std=init_log_std,
+            )
+
+        self.actor = actor.to(device)
         self.act_min = act_min
         self.act_max = act_max
 
         # Frozen reference policy (deep copy with no gradients)
-        self.actor_ref = copy.deepcopy(actor)
+        self.actor_ref = copy.deepcopy(self.actor)
         for param in self.actor_ref.parameters():
             param.requires_grad = False
 
@@ -306,8 +479,8 @@ class GRPODrifting(nn.Module):
         # Analytical KL divergence: KL(N_curr || N_ref)
         # For diagonal Gaussian distributions with independent dimensions
         B = current_mean.shape[0]
-        curr_mean_flat = current_mean.view(B, -1)   # (B, Ta*Da)
-        ref_mean_flat = ref_mean.view(B, -1)         # (B, Ta*Da)
+        curr_mean_flat = current_mean.reshape(B, -1)   # (B, Ta*Da)
+        ref_mean_flat = ref_mean.reshape(B, -1)         # (B, Ta*Da)
         curr_std_expanded = current_std.expand(B, -1)  # (B, Ta*Da)
         ref_std_expanded = ref_std.expand(B, -1)       # (B, Ta*Da)
 

@@ -446,6 +446,30 @@ class DriftingPolicy(nn.Module):
         )
         return loss
 
+    def predict(self, cond: dict, z: torch.Tensor = None, clip_actions: bool = True) -> Tensor:
+        """
+        Differentiable 1-NFE prediction used by downstream fine-tuning.
+
+        Args:
+            cond: Condition dictionary with at least a `state` key.
+            z: Optional latent/noise input. If omitted, a fresh Gaussian sample is
+               drawn, mirroring the pretraining setup.
+            clip_actions: Whether to clamp the predicted actions to the action
+               range expected by the environment.
+
+        Returns:
+            (B, horizon_steps, action_dim) predicted action chunk.
+        """
+        B = cond["state"].shape[0]
+
+        if z is None:
+            z = torch.randn((B,) + self.data_shape, device=self.device)
+
+        action = self._call_network(z, cond)
+        if clip_actions:
+            action = action.clamp(*self.act_range)
+        return action
+
     @torch.no_grad()
     def sample(
         self,
@@ -474,8 +498,7 @@ class DriftingPolicy(nn.Module):
             z = torch.randn((B,) + self.data_shape, device=self.device)
 
         # Single-step forward pass
-        action = self._call_network(z, cond)
-        action = action.clamp(*self.act_range)
+        action = self.predict(cond=cond, z=z, clip_actions=True)
 
         # Runtime assertion: verify action boundaries before env interaction
         assert action.min() >= self.act_range[0] and action.max() <= self.act_range[1], (

@@ -51,6 +51,10 @@ class TrainPPOImgDriftingAgent(TrainPPOImgShortCutAgent):
 
     def __init__(self, cfg):
         super().__init__(cfg)
+        log.warning(
+            "TrainPPOImgDriftingAgent is deprecated for drifting online fine-tuning. "
+            "Prefer TrainGRPODriftingAgent for new runs."
+        )
         log.info("Initialized Drifting Policy PPO training agent with image observations")
 
         # Drifting Policy uses 1 inference step (1 NFE)

@@ -66,7 +66,7 @@ class GRPOBuffer:
 
     def clear(self):
         """Reset all trajectory storage for a new collection round."""
-        self.obs = []           # List of (T_i, cond_steps, obs_dim) tensors
+        self.obs = []           # List of dict[str, Tensor] or state tensors
         self.actions = []       # List of (T_i, horizon_steps, action_dim) tensors
         self.old_log_probs = [] # List of (T_i,) tensors
         self.group_returns = [] # List of scalar episodic returns
@@ -158,7 +158,7 @@ class GRPOBuffer:
             device: Target device (defaults to self.device)
 
         Returns:
-            all_obs: dict with 'state' key, (N, cond_steps, obs_dim)
+            all_obs: dict of stacked observations
             all_actions: (N, horizon_steps, action_dim)
             all_old_log_probs: (N,)
             all_advantages: (N,)
@@ -166,25 +166,37 @@ class GRPOBuffer:
         device = device or self.device
         advantages = self.compute_group_advantages()
 
-        all_obs_list = []
+        all_obs_lists = None
         all_actions_list = []
         all_log_probs_list = []
         all_advs_list = []
 
         for i in range(len(self.obs)):
-            traj_len = len(self.obs[i])
-            all_obs_list.append(self.obs[i])
+            traj_obs = self.obs[i]
+            if not isinstance(traj_obs, dict):
+                traj_obs = {"state": traj_obs}
+            if all_obs_lists is None:
+                all_obs_lists = {key: [] for key in traj_obs}
+
+            traj_len = next(iter(traj_obs.values())).shape[0]
+            for key, value in traj_obs.items():
+                all_obs_lists[key].append(value)
             all_actions_list.append(self.actions[i])
             all_log_probs_list.append(self.old_log_probs[i])
             # Broadcast trajectory-level advantage to every step
             all_advs_list.append(advantages[i].expand(traj_len))
 
-        all_obs_tensor = torch.cat(all_obs_list, dim=0).to(device)
+        if all_obs_lists is None:
+            raise RuntimeError("GRPOBuffer is empty; no trajectories were collected.")
+
+        all_obs = {
+            key: torch.cat(value_list, dim=0).to(device)
+            for key, value_list in all_obs_lists.items()
+        }
         all_actions = torch.cat(all_actions_list, dim=0).to(device)
         all_old_log_probs = torch.cat(all_log_probs_list, dim=0).to(device)
         all_advantages = torch.cat(all_advs_list, dim=0).to(device)
 
-        all_obs = {"state": all_obs_tensor}
         return all_obs, all_actions, all_old_log_probs, all_advantages
 
     def summarize_episode_reward(self):

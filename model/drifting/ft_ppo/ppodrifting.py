@@ -27,6 +27,9 @@ Uses Gaussian policy approximation: the deterministic single-step output of the
 Drifting Policy serves as the mean, with a learned exploration noise standard
 deviation on top. This converts the 1-NFE Drifting Policy into a standard
 Gaussian policy suitable for PPO log-probability computation.
+
+This path is kept for backward compatibility. New drifting online fine-tuning
+should use continuous GRPO instead.
 """
 
 import logging
@@ -213,6 +216,10 @@ class PPODrifting(PPOFlow):
                  logprob_debug_recalculate,
                  explore_net_activation_type
                  ):
+        log.warning(
+            "PPODrifting is deprecated for drifting online fine-tuning. "
+            "Prefer continuous GRPO for new runs."
+        )
 
         super().__init__(
             device,

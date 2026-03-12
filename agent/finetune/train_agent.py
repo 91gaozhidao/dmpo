@@ -75,63 +75,81 @@ class TrainAgent:
             else:
                 log.info(f"Wandb running online. Run ID: {run_id}")
 
+        train_cfg = cfg.get("train", {})
+        env_cfg = cfg.env
+        env_name = env_cfg.get("name", env_cfg.get("env_name", cfg.get("env_name")))
+        env_type = env_cfg.get("env_type", cfg.get("env_suite", None))
+        shape_meta = cfg.get("shape_meta", None)
+        use_image_obs = env_cfg.get(
+            "use_image_obs",
+            shape_meta is not None and "rgb" in shape_meta.obs,
+        )
+        robomimic_env_cfg_path = cfg.get("robomimic_env_cfg_path", None)
+        if robomimic_env_cfg_path is None and env_type == "robomimic" and env_name is not None:
+            env_meta_name = f"{env_name}-img.json" if use_image_obs else f"{env_name}.json"
+            candidate_path = os.path.join("cfg", "robomimic", "env_meta", env_meta_name)
+            if os.path.exists(candidate_path):
+                robomimic_env_cfg_path = candidate_path
+
         # Make vectorized env
-        self.env_name = cfg.env.name
-        env_type = cfg.env.get("env_type", None)
+        if env_name is None:
+            raise ValueError("Could not resolve env name from the fine-tuning config.")
+        self.env_name = env_name
+        self.use_image_obs = use_image_obs
         self.venv = make_async(
-            cfg.env.name,
+            env_name,
             env_type=env_type,
-            num_envs=cfg.env.n_envs,
+            num_envs=env_cfg.n_envs,
             asynchronous=True,
-            max_episode_steps=cfg.env.max_episode_steps,
-            wrappers=cfg.env.get("wrappers", None),
-            robomimic_env_cfg_path=cfg.get("robomimic_env_cfg_path", None),
-            shape_meta=cfg.get("shape_meta", None),
-            use_image_obs=cfg.env.get("use_image_obs", False),
-            render=cfg.env.get("render", False),
-            render_offscreen=cfg.env.get("save_video", False),
+            max_episode_steps=env_cfg.max_episode_steps,
+            wrappers=env_cfg.get("wrappers", None),
+            robomimic_env_cfg_path=robomimic_env_cfg_path,
+            shape_meta=shape_meta,
+            use_image_obs=use_image_obs,
+            render=env_cfg.get("render", False),
+            render_offscreen=env_cfg.get("save_video", False),
             obs_dim=cfg.obs_dim,
             action_dim=cfg.action_dim,
-            **cfg.env.specific if "specific" in cfg.env else {},
+            **env_cfg.specific if "specific" in env_cfg else {},
         )
         if not env_type == "furniture":
             self.venv.seed(
-                [self.seed + i for i in range(cfg.env.n_envs)]
+                [self.seed + i for i in range(env_cfg.n_envs)]
             )  # otherwise parallel envs might have the same initial states!
             # isaacgym environments do not need seeding
-        self.n_envs = cfg.env.n_envs
+        self.n_envs = env_cfg.n_envs
         self.n_cond_step = cfg.cond_steps
         self.obs_dim = cfg.obs_dim
         self.action_dim = cfg.action_dim
         self.act_steps = cfg.act_steps
         self.horizon_steps = cfg.horizon_steps
-        self.max_episode_steps = cfg.env.max_episode_steps
-        self.reset_at_iteration = cfg.env.get("reset_at_iteration", True)
-        self.save_full_observations = cfg.env.get("save_full_observations", False)
+        self.max_episode_steps = env_cfg.max_episode_steps
+        self.reset_at_iteration = env_cfg.get("reset_at_iteration", True)
+        self.save_full_observations = env_cfg.get("save_full_observations", False)
         self.furniture_sparse_reward = (
-            cfg.env.specific.get("sparse_reward", False)
-            if "specific" in cfg.env
+            env_cfg.specific.get("sparse_reward", False)
+            if "specific" in env_cfg
             else False
         )  # furniture specific, for best reward calculation
 
         # Batch size for gradient update
-        self.batch_size: int = cfg.train.batch_size
+        self.batch_size: int = train_cfg.get("batch_size", cfg.get("batch_size"))
 
         # Build model and load checkpoint
         self.model = hydra.utils.instantiate(cfg.model)
 
         # Training params
         self.itr = 0
-        self.n_train_itr = cfg.train.n_train_itr
-        self.val_freq = cfg.train.val_freq
-        self.force_train = cfg.train.get("force_train", False)
-        self.n_steps = cfg.train.n_steps
+        self.n_train_itr = train_cfg.get("n_train_itr", cfg.get("n_train_itr"))
+        self.val_freq = train_cfg.get("val_freq", cfg.get("val_freq", 0))
+        self.force_train = train_cfg.get("force_train", False)
+        self.n_steps = train_cfg.get("n_steps", cfg.get("n_steps"))
         self.best_reward_threshold_for_success = (
             len(self.venv.pairs_to_assemble)
             if env_type == "furniture"
-            else cfg.env.best_reward_threshold_for_success
+            else env_cfg.get("best_reward_threshold_for_success", 1)
         )
-        self.max_grad_norm = cfg.train.get("max_grad_norm", None)
+        self.max_grad_norm = train_cfg.get("max_grad_norm", None)
 
         # Logging, rendering, checkpoints
         self.logdir = cfg.logdir
@@ -140,19 +158,29 @@ class TrainAgent:
         self.result_path = os.path.join(self.logdir, "result.pkl")
         os.makedirs(self.render_dir, exist_ok=True)
         os.makedirs(self.checkpoint_dir, exist_ok=True)
-        self.save_trajs = cfg.train.get("save_trajs", False)
-        self.log_freq = cfg.train.get("log_freq", 1)
-        self.save_model_freq = cfg.train.save_model_freq
-        self.render_freq = cfg.train.render.freq
-        self.n_render = cfg.train.render.num
-        self.render_video = cfg.env.get("save_video", False)
+        self.save_trajs = train_cfg.get("save_trajs", False)
+        self.log_freq = train_cfg.get("log_freq", cfg.get("log_freq", 1))
+        self.save_model_freq = train_cfg.get(
+            "save_model_freq",
+            cfg.get("save_model_freq", 1),
+        )
+        render_cfg = train_cfg.get("render", None)
+        self.render_freq = (
+            render_cfg.get("freq", 1) if render_cfg is not None else 1
+        )
+        self.n_render = (
+            render_cfg.get("num", cfg.get("render_num", 0))
+            if render_cfg is not None
+            else cfg.get("render_num", 0)
+        )
+        self.render_video = env_cfg.get("save_video", False)
         assert self.n_render <= self.n_envs, "n_render must be <= n_envs"
         assert not (
             self.n_render <= 0 and self.render_video
         ), "Need to set n_render > 0 if saving video"
         self.traj_plotter = (
-            hydra.utils.instantiate(cfg.train.plotter)
-            if "plotter" in cfg.train
+            hydra.utils.instantiate(train_cfg.plotter)
+            if "plotter" in train_cfg
             else None
         )
 

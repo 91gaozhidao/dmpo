@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from typing import Dict, Any
+import einops
 
 class DriftingViTWrapper(nn.Module):
     """
@@ -23,9 +24,10 @@ class DriftingViTWrapper(nn.Module):
         self.core_network = core_network
         self.vision_encoder = vision_encoder
         self.cond_dim = cond_dim
+        self.use_spatial_emb = spatial_emb > 0
         
         # Visual feature processing
-        if spatial_emb > 0:
+        if self.use_spatial_emb:
             from model.common.modules import SpatialEmb
             self.compress = SpatialEmb(
                 num_patch=self.vision_encoder.num_patch,
@@ -53,22 +55,19 @@ class DriftingViTWrapper(nn.Module):
             
         img = cond["rgb"]
         B, T, C, H, W = img.shape
-        img = img.view(B * T, C, H, W)
-        
-        if hasattr(self.compress, "spatial_emb"): # using SpatialEmb
-            feat, patch_feat = self.vision_encoder(img)
-            feat = feat.view(B, T, -1)
-            patch_feat = patch_feat.view(B, T, patch_feat.shape[-2], patch_feat.shape[-1])
-            state = cond["state"].view(B, -1)
-            cond_emb = self.compress(patch_feat, state)
+        state = cond["state"].view(B, -1)
+
+        # Match the pretraining/eval image pipelines: concatenate the image
+        # history along channels before the ViT.
+        img = einops.rearrange(img, "b t c h w -> b (t c) h w").float()
+        feat = self.vision_encoder(img)
+
+        if self.use_spatial_emb:
+            visual_feat = self.compress.forward(feat, state)
         else:
-            feat, _ = self.vision_encoder(img)
-            feat = self.compress(feat)
-            feat = feat.view(B, -1)
-            state = cond["state"].view(B, -1)
-            cond_emb = torch.cat([feat, state], dim=-1)
-            
-        return cond_emb
+            visual_feat = self.compress(feat.flatten(1, -1))
+
+        return torch.cat([visual_feat, state], dim=-1)
 
     def forward(self, x: torch.Tensor, cond: Dict[str, torch.Tensor], **kwargs) -> torch.Tensor:
         """

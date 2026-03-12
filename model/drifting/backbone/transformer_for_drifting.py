@@ -48,8 +48,13 @@ class TransformerForDrifting(nn.Module):
         causal_attn: bool = False,
         obs_as_cond: bool = False,
         n_cond_layers: int = 0,
+        time_as_cond=None,
     ) -> None:
         super().__init__()
+
+        # Drifting never conditions on diffusion time, but older configs still
+        # pass this field because they were copied from multi-step models.
+        _ = time_as_cond
 
         if n_obs_steps is None:
             n_obs_steps = horizon
