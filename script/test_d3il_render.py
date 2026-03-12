@@ -34,7 +34,7 @@ from gym.envs import make as make_
 import numpy as np
 
 # env = ObstacleAvoidanceEnv(render=False)
-env = make_("avoiding-v0", render=True)
+env = make_("avoiding-v0", render=False)
 # env.start()   # no need to start() any more, already run in init() now
 env.reset()
 print(env.action_space)
