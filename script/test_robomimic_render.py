@@ -16,6 +16,7 @@ import time
 from pathlib import Path
 
 from gym import spaces
+import numpy as np
 
 import robomimic.utils.env_utils as EnvUtils
 import robomimic.utils.obs_utils as ObsUtils
@@ -136,6 +137,32 @@ def _print_obs_summary(obs: dict) -> None:
         print(f"  - {key}: shape={shape}, dtype={dtype}")
 
 
+def _resolve_action_space(env) -> spaces.Box:
+    if hasattr(env, "action_spec"):
+        spec = env.action_spec() if callable(env.action_spec) else env.action_spec
+        low, high = spec
+        return spaces.Box(low=low, high=high)
+
+    if hasattr(env, "action_dimension"):
+        action_dim = (
+            env.action_dimension()
+            if callable(env.action_dimension)
+            else env.action_dimension
+        )
+        low = -np.ones(action_dim, dtype=np.float32)
+        high = np.ones(action_dim, dtype=np.float32)
+        return spaces.Box(low=low, high=high)
+
+    if hasattr(env, "env") and hasattr(env.env, "action_spec"):
+        spec = env.env.action_spec() if callable(env.env.action_spec) else env.env.action_spec
+        low, high = spec
+        return spaces.Box(low=low, high=high)
+
+    raise AttributeError(
+        f"Could not infer action space from env type {type(env).__name__}."
+    )
+
+
 def main() -> int:
     args = _parse_args()
     env_meta_path, env_meta, task_defaults = _resolve_env_meta(args)
@@ -157,8 +184,7 @@ def main() -> int:
 
     # Match the training path to reduce unnecessary memory churn.
     env.env.hard_reset = False
-    low, high = env.action_spec
-    action_space = spaces.Box(low=low, high=high)
+    action_space = _resolve_action_space(env)
 
     for reset_idx in range(args.resets):
         start = time.time()
