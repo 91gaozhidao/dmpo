@@ -94,7 +94,7 @@ model:
       n_emb: 256
       p_drop_emb: 0.1
       p_drop_attn: 0.1
-      causal_attn: true
+      causal_attn: false
       time_as_cond: false
       obs_as_cond: true
     vision_encoder:

@@ -191,6 +191,7 @@ class TestQGuidedHydraCompose:
         assert cfg.robomimic_env_cfg_path == "cfg/robomimic/env_meta/can-img.json"
         assert cfg.shape_meta.obs.rgb.shape == [3, 96, 96]
         assert cfg.image_keys == ["robot0_eye_in_hand_image"]
+        assert cfg.model.policy.core_network.causal_attn is False
         assert "templates" not in cfg
 
     def test_robomimic_unet_task_compose_from_task_dir(self):

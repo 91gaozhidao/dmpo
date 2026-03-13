@@ -48,6 +48,10 @@ from model.drifting.drifting import DriftingPolicy
 log = logging.getLogger(__name__)
 
 
+def _is_compatible_drifting_buffer_key(key: str) -> bool:
+    return key.endswith(".mask") or key.endswith(".memory_mask")
+
+
 def _find_run_config_path(checkpoint_path: str) -> str:
     checkpoint_path = os.path.abspath(checkpoint_path)
     search_dir = os.path.dirname(checkpoint_path)
@@ -369,7 +373,31 @@ class QGuidedDrifting(nn.Module):
                 device=self.device,
                 use_ema=self.use_ema_checkpoint,
             )
-            self.actor.load_state_dict(loaded_actor.state_dict(), strict=True)
+            missing_keys, unexpected_keys = self.actor.load_state_dict(
+                loaded_actor.state_dict(),
+                strict=False,
+            )
+            incompatible_missing = [
+                key for key in missing_keys if not _is_compatible_drifting_buffer_key(key)
+            ]
+            incompatible_unexpected = [
+                key
+                for key in unexpected_keys
+                if not _is_compatible_drifting_buffer_key(key)
+            ]
+            if incompatible_missing or incompatible_unexpected:
+                raise ValueError(
+                    "Failed to copy the drifting actor into Q-guided fine-tuning. "
+                    f"Missing keys: {incompatible_missing}. "
+                    f"Unexpected keys: {incompatible_unexpected}."
+                )
+            if missing_keys or unexpected_keys:
+                log.info(
+                    "Ignoring compatible drifting buffer mismatch while copying actor "
+                    "checkpoint. Missing keys: %s. Unexpected keys: %s.",
+                    missing_keys,
+                    unexpected_keys,
+                )
 
         self.reference_actor = copy.deepcopy(self.actor).eval()
         for param in self.reference_actor.parameters():
