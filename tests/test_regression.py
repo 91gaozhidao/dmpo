@@ -63,11 +63,6 @@ class TestLauncherImports:
 class TestOfflineDatasetPathResolution:
     """Verify that the launcher resolves offline_dataset_path correctly."""
 
-    def _make_dict_cfg(self, d: dict):
-        """Create a minimal OmegaConf-like dict that supports attribute access."""
-        from omegaconf import OmegaConf
-        return OmegaConf.create(d)
-
     def test_hf_path_propagates_to_offline_dataset(self):
         """When offline_dataset_path is hf://, it should propagate to
         offline_dataset.dataset_path after resolution."""

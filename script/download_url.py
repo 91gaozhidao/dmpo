@@ -35,6 +35,8 @@ Google Drive mirrors.
 
 import logging
 
+from typing import Optional
+
 log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -47,7 +49,7 @@ _NORMALIZATION_URLS: dict = {}
 _CHECKPOINT_URLS: dict = {}
 
 
-def get_dataset_download_url(cfg) -> str:
+def get_dataset_download_url(cfg) -> Optional[str]:
     """Return a Google Drive download URL for the training dataset.
 
     Falls back to ``None`` when no mapping is available for the given config.
@@ -65,7 +67,7 @@ def get_dataset_download_url(cfg) -> str:
     return url
 
 
-def get_normalization_download_url(cfg) -> str:
+def get_normalization_download_url(cfg) -> Optional[str]:
     """Return a Google Drive download URL for normalization statistics.
 
     Falls back to ``None`` when no mapping is available for the given config.
@@ -83,7 +85,7 @@ def get_normalization_download_url(cfg) -> str:
     return url
 
 
-def get_checkpoint_download_url(cfg) -> str:
+def get_checkpoint_download_url(cfg) -> Optional[str]:
     """Return a Google Drive download URL for a pre-trained checkpoint.
 
     Falls back to ``None`` when no mapping is available for the given config.
