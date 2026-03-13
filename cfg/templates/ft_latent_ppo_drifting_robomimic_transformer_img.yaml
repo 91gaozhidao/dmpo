@@ -1,0 +1,175 @@
+# @package _global_
+######################################################################
+env_suite: robomimic
+######################################################################
+defaults:
+  - _self_
+hydra:
+  run:
+    dir: ${logdir}
+_target_: agent.finetune.drifting.train_latent_ppo_drifting_agent.TrainLatentPPODriftingAgent
+name: ${env_name}_ft_latent_ppo_drifting_transformer_img_ta${horizon_steps}
+logdir: ${oc.env:REINFLOW_LOG_DIR}/robomimic/finetune/${env_name}/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
+base_policy_path:
+robomimic_env_cfg_path: cfg/robomimic/env_meta/${env_name}-img.json
+normalization_path: ${oc.env:REINFLOW_DATA_DIR}/robomimic/${env_name}-img/normalization.npz
+seed: 42
+device: cuda:0
+sim_device: cuda:0
+env:
+  n_envs: 25
+  name: ${env_name}
+  best_reward_threshold_for_success: 1
+  max_episode_steps: ${max_episode_steps}
+  save_video: false
+  use_image_obs: true
+  wrappers:
+    robomimic_image:
+      normalization_path: ${normalization_path}
+      low_dim_keys: ${low_dim_keys}
+      image_keys: ${image_keys}
+      shape_meta: ${shape_meta}
+    multi_step:
+      n_obs_steps: ${cond_steps}
+      n_action_steps: ${act_steps}
+      max_episode_steps: ${env.max_episode_steps}
+      reset_within_step: true
+wandb:
+  entity: ${oc.env:REINFLOW_WANDB_ENTITY}
+  project: DM1-robomimic-${env_name}-latent-ppo-drifting
+  run: ${now:%Y-%m-%d}_${now:%H-%M-%S}_${name}
+  offline_mode: false
+train:
+  n_train_itr: 301
+  n_steps: 400
+  n_steps_eval: 500
+  n_critic_warmup_itr: 2
+  gamma: 0.999
+  gae_lambda: 0.95
+  clip_coef: 0.2
+  ent_coef: 0.01
+  vf_coef: 0.5
+  target_kl: 0.01
+  normalize_advantages: true
+  reward_scale_running: true
+  reward_scale_const: 1.0
+  augment: true
+  actor_lr: 3.0e-5
+  actor_weight_decay: 0
+  actor_lr_scheduler:
+    first_cycle_steps: 301
+    warmup_steps: 25
+    min_lr: 3.0e-6
+  critic_lr: 4.5e-4
+  critic_weight_decay: 0
+  critic_lr_scheduler:
+    first_cycle_steps: 301
+    warmup_steps: 25
+    min_lr: 1.0e-4
+  save_model_freq: 100
+  val_freq: 10
+  render:
+    freq: 1
+    num: 0
+  log_freq: 10
+  batch_size: 500
+  update_epochs: 10
+  grad_accumulate: 20
+  max_grad_norm: 25.0
+shape_meta: {}
+low_dim_keys: []
+image_keys: []
+model:
+  _target_: model.drifting.ft_latent_ppo.latent_ppo_drifting.LatentPPODrifting
+  device: ${device}
+  actor_policy_path: ${base_policy_path}
+  policy:
+    _target_: model.drifting.backbone.vit_wrapper.DriftingViTWrapper
+    core_network:
+      _target_: model.drifting.backbone.transformer_for_drifting.TransformerForDrifting
+      input_dim: ${action_dim}
+      output_dim: ${action_dim}
+      horizon: ${horizon_steps}
+      n_obs_steps: ${cond_steps}
+      cond_dim: ${eval:'${model.policy.visual_feature_dim} + ${model.policy.cond_dim}'}
+      n_layer: 4
+      n_head: 4
+      n_emb: 256
+      p_drop_emb: 0.1
+      p_drop_attn: 0.1
+      causal_attn: false
+      time_as_cond: false
+      obs_as_cond: true
+    vision_encoder:
+      _target_: model.common.vit.VitEncoder
+      obs_shape: ${shape_meta.obs.rgb.shape}
+      num_channel: ${eval:'${shape_meta.obs.rgb.shape[0]} * ${img_cond_steps}'}
+      cfg:
+        patch_size: 8
+        depth: 1
+        embed_dim: 128
+        num_heads: 4
+        embed_style: embed2
+        embed_norm: 0
+    cond_dim: ${eval:'${obs_dim} * ${cond_steps}'}
+    spatial_emb: 128
+    visual_feature_dim: 128
+    dropout: 0.1
+  latent_policy:
+    _target_: model.drifting.ft_latent_ppo.latent_ppo_drifting.LatentPolicyHeadImage
+    backbone:
+      _target_: model.common.vit.VitEncoder
+      obs_shape: ${shape_meta.obs.rgb.shape}
+      num_channel: ${eval:'${shape_meta.obs.rgb.shape[0]} * ${img_cond_steps}'}
+      cfg:
+        patch_size: 8
+        depth: 1
+        embed_dim: 128
+        num_heads: 4
+        embed_style: embed2
+        embed_norm: 0
+    cond_dim: ${eval:'${obs_dim} * ${cond_steps}'}
+    horizon_steps: ${horizon_steps}
+    action_dim: ${action_dim}
+    img_cond_steps: ${img_cond_steps}
+    spatial_emb: 128
+    visual_feature_dim: 128
+    dropout: 0.1
+    num_img: 1
+    augment: ${train.augment}
+    mlp_dims: [768, 768, 768]
+    activation_type: Mish
+    residual_style: true
+    min_std: 0.05
+    max_std: 2.0
+  critic:
+    _target_: model.common.critic.ViTCritic
+    backbone:
+      _target_: model.common.vit.VitEncoder
+      obs_shape: ${shape_meta.obs.rgb.shape}
+      num_channel: ${eval:'${shape_meta.obs.rgb.shape[0]} * ${img_cond_steps}'}
+      cfg:
+        patch_size: 8
+        depth: 1
+        embed_dim: 128
+        num_heads: 4
+        embed_style: embed2
+        embed_norm: 0
+    cond_dim: ${eval:'${obs_dim} * ${cond_steps}'}
+    img_cond_steps: ${img_cond_steps}
+    mlp_dims: [256, 256, 256]
+    activation_type: Mish
+    residual_style: true
+    spatial_emb: 128
+    dropout: 0.0
+    num_img: 1
+    augment: ${train.augment}
+  act_dim: ${action_dim}
+  horizon_steps: ${horizon_steps}
+  act_steps: ${act_steps}
+  act_min: -1
+  act_max: 1
+  obs_dim: ${obs_dim}
+  cond_steps: ${cond_steps}
+  seed: ${seed}
+  use_ema_checkpoint: true

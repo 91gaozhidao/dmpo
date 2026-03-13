@@ -1,0 +1,15 @@
+# @package _global_
+defaults:
+  - /templates/ft_latent_ppo_drifting_gym_unet1d
+  - _self_
+hydra:
+  searchpath:
+    - file://${oc.env:REINFLOW_DIR}/cfg
+env_name: hopper-medium-v2
+action_dim: 3
+horizon_steps: 4
+act_steps: 4
+obs_dim: 11
+cond_steps: 1
+max_episode_steps: 1000
+best_reward_threshold_for_success: 3

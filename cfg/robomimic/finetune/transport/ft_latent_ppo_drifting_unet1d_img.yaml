@@ -1,0 +1,33 @@
+# @package _global_
+defaults:
+  - /templates/ft_latent_ppo_drifting_robomimic_unet1d_img
+  - _self_
+hydra:
+  searchpath:
+    - file://${oc.env:REINFLOW_DIR}/cfg
+env_name: transport
+obs_dim: 18
+cond_steps: 1
+img_cond_steps: 1
+action_dim: 14
+horizon_steps: 8
+act_steps: 8
+max_episode_steps: 700
+shape_meta:
+  obs:
+    rgb:
+      shape: [6, 96, 96]
+    state:
+      shape: [18]
+  action:
+    shape: [14]
+low_dim_keys:
+  - robot0_eef_pos
+  - robot0_eef_quat
+  - robot0_gripper_qpos
+  - robot1_eef_pos
+  - robot1_eef_quat
+  - robot1_gripper_qpos
+image_keys:
+  - shouldercamera0_image
+  - shouldercamera1_image

@@ -181,6 +181,21 @@ files may still be legacy pre-training datasets without `rewards` and
 for smoke/debugging compatibility, but proper Q-guided image training should
 use datasets regenerated with `script/dataset/process_robomimic_dataset.py`.
 
+### Latent-PPO Drifting
+
+Latent-PPO keeps the drifting generator frozen and moves PPO into the latent
+space:
+
+- The action generator stays `a = f_theta(s, z)` with a single drifting forward
+  pass.
+- PPO log-probabilities are defined on `z ~ pi_phi(z | s)`, not on actions.
+- The drifting backbone loaded from `base_policy_path` is frozen in v1.
+- Only the latent policy head and the value critic are optimized online.
+
+The new `ft_latent_ppo_drifting_*` configs are the mainline online RL entry
+points when the goal is to push drifting directly against DMPO on the same
+benchmark suite.
+
 ### Pure Online Q-Guided Drifting
 
 Pure online mode keeps the same critic-guided drifting actor update, but drops
@@ -195,13 +210,33 @@ the offline reward dataset assumption entirely:
   `train.online_only=true` now also disables offline dataset resolution in the
   launcher.
 
-The new `ft_qguided_drifting_online_*` configs are the recommended starting
-point for current drifting online RL runs, especially when demonstrations are
-reward-less and only environment rollouts provide rewards.
+The `ft_qguided_drifting_online_*` configs remain available as the critic-guided
+fallback line, especially when you want to compare latent-PPO against the
+existing drifting-native actor update.
 
 ### Training Commands
 
 #### Gym / Locomotion
+
+```bash
+# Hopper (UNet1D, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_unet1d \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/hopper-v2
+
+# Walker2d (Transformer, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_transformer \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/walker2d-v2
+
+# Ant (Transformer, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_transformer \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/ant-v2
+
+# Humanoid (Transformer, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_transformer \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/Humanoid-v3
+```
+
+#### Q-Guided Gym / Locomotion
 
 ```bash
 # Hopper (Transformer)
@@ -221,7 +256,7 @@ python script/run.py --config-name=ft_qguided_drifting_transformer \
     --config-path=$REINFLOW_DIR/cfg/gym/finetune/Humanoid-v3
 ```
 
-#### Pure Online Gym / Locomotion
+#### Q-Guided Pure Online Gym / Locomotion
 
 ```bash
 # Hopper (UNet1D, pure online)
@@ -240,6 +275,22 @@ python script/run.py --config-name=ft_qguided_drifting_online_unet1d \
 #### Kitchen
 
 ```bash
+# Kitchen Complete (Transformer, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_transformer \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/kitchen-complete-v0
+
+# Kitchen Partial (UNet1D, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_unet1d \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/kitchen-partial-v0
+
+# Kitchen Mixed (Transformer, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_transformer \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/kitchen-mixed-v0
+```
+
+#### Q-Guided Kitchen
+
+```bash
 # Kitchen Complete (Transformer)
 python script/run.py --config-name=ft_qguided_drifting_transformer \
     --config-path=$REINFLOW_DIR/cfg/gym/finetune/kitchen-complete-v0
@@ -254,6 +305,26 @@ python script/run.py --config-name=ft_qguided_drifting_transformer \
 ```
 
 #### RoboMimic (Image-based)
+
+```bash
+# Lift (Transformer with ViT, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_transformer_img \
+    --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/lift
+
+# Can (UNet1D with ViT, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_unet1d_img \
+    --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/can
+
+# Square (Transformer with ViT, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_transformer_img \
+    --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/square
+
+# Transport (UNet1D with ViT, latent PPO)
+python script/run.py --config-name=ft_latent_ppo_drifting_unet1d_img \
+    --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/transport
+```
+
+#### Q-Guided RoboMimic (Image-based)
 
 ```bash
 # Lift (Transformer with ViT)

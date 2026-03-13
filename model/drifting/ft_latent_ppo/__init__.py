@@ -20,10 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .train_latent_ppo_drifting_agent import TrainLatentPPODriftingAgent
-from .train_qguided_drifting_agent import TrainQGuidedDriftingAgent
+from .latent_ppo_drifting import (
+    LatentPolicyHeadImage,
+    LatentPolicyHeadLowdim,
+    LatentPPODrifting,
+)
 
 __all__ = [
-    "TrainLatentPPODriftingAgent",
-    "TrainQGuidedDriftingAgent",
+    "LatentPolicyHeadImage",
+    "LatentPolicyHeadLowdim",
+    "LatentPPODrifting",
 ]
