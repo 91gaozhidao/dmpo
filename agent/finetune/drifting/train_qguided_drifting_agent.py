@@ -95,34 +95,63 @@ class TrainQGuidedDriftingAgent(TrainAgent):
     def __init__(self, cfg):
         super().__init__(cfg)
 
-        # Online-only mode: skip offline dataset when it is not provided or
-        # when the underlying data lacks reward labels.  In this mode the
-        # critic is warmed up purely from online replay-buffer transitions.
-        self.online_only = cfg.train.get("online_only", False)
-
-        if self.online_only:
-            self.dataset_offline = None
-            log.info(
-                "Online-only mode enabled: offline dataset will NOT be used. "
-                "Critic will be trained purely from online replay-buffer data."
-            )
-        else:
-            self.dataset_offline = hydra.utils.instantiate(cfg.offline_dataset)
-
+        requested_online_only = bool(cfg.train.get("online_only", False))
         self.gamma = cfg.train.gamma
         self.n_critic_warmup_itr = cfg.train.n_critic_warmup_itr
         self.target_ema_rate = cfg.train.target_ema_rate
         self.scale_reward_factor = cfg.train.scale_reward_factor
         self.buffer_size = cfg.train.buffer_size
         self.offline_batch_ratio = (
-            0.0 if self.online_only else cfg.train.offline_batch_ratio
+            0.0 if requested_online_only else cfg.train.offline_batch_ratio
         )
         self.offline_only_iters = (
-            0 if self.online_only else cfg.train.offline_only_iters
+            0 if requested_online_only else cfg.train.offline_only_iters
         )
         self.updates_per_itr = cfg.train.updates_per_itr
         self.n_steps_eval = cfg.train.n_steps_eval
         self.offline_cache_batch_size = cfg.train.get("offline_cache_batch_size", 2048)
+        self.min_replay_size = int(cfg.train.get("min_replay_size", 0))
+
+        offline_dataset_cfg = None if requested_online_only else cfg.get("offline_dataset", None)
+        self.dataset_offline = (
+            hydra.utils.instantiate(offline_dataset_cfg)
+            if offline_dataset_cfg is not None
+            else None
+        )
+        self.has_offline_dataset = self.dataset_offline is not None
+
+        if not 0.0 <= self.offline_batch_ratio <= 1.0:
+            raise ValueError(
+                "offline_batch_ratio must be in [0, 1], "
+                f"but got {self.offline_batch_ratio}."
+            )
+        if self.min_replay_size < 0:
+            raise ValueError(
+                f"min_replay_size must be non-negative, got {self.min_replay_size}."
+            )
+
+        if not self.has_offline_dataset:
+            if self.offline_batch_ratio > 0:
+                raise ValueError(
+                    "offline_batch_ratio > 0 requires an offline_dataset, but "
+                    "the config does not provide one."
+                )
+            if self.offline_only_iters > 0:
+                log.warning(
+                    "offline_only_iters=%s requested without an offline dataset; "
+                    "forcing it to 0 for pure online fine-tuning.",
+                    self.offline_only_iters,
+                )
+                self.offline_only_iters = 0
+
+        self.online_only = requested_online_only or (
+            not self.has_offline_dataset or self.offline_batch_ratio <= 0.0
+        )
+        if requested_online_only:
+            log.info(
+                "Online-only mode enabled: offline dataset will NOT be used. "
+                "Critic will be trained purely from online replay-buffer data."
+            )
 
         self.actor_optimizer = torch.optim.AdamW(
             self.model.actor.parameters(),
@@ -154,6 +183,9 @@ class TrainQGuidedDriftingAgent(TrainAgent):
         )
 
     def _cache_offline_dataset(self):
+        if not self.has_offline_dataset or self.offline_batch_ratio <= 0.0:
+            return None
+
         dataloader = torch.utils.data.DataLoader(
             self.dataset_offline,
             batch_size=min(len(self.dataset_offline), self.offline_cache_batch_size),
@@ -194,6 +226,10 @@ class TrainQGuidedDriftingAgent(TrainAgent):
         return offline_data
 
     def _sample_offline_batch(self, offline_data, batch_size: int):
+        if offline_data is None:
+            raise RuntimeError(
+                "Tried to sample an offline batch, but no offline dataset is loaded."
+            )
         replace = len(offline_data["actions"]) < batch_size
         indices = np.random.choice(
             len(offline_data["actions"]), size=batch_size, replace=replace
@@ -220,20 +256,37 @@ class TrainQGuidedDriftingAgent(TrainAgent):
     def _concat_obs(self, obs_a, obs_b):
         return {key: torch.cat([obs_a[key], obs_b[key]], dim=0) for key in obs_a}
 
+    def _num_online_samples_per_batch(self):
+        if self.online_only:
+            return self.batch_size
+        if self.offline_batch_ratio >= 1.0:
+            return 0
+        n_offline = int(round(self.batch_size * self.offline_batch_ratio))
+        return max(0, self.batch_size - n_offline)
+
+    def _should_collect_rollout(self):
+        return self.online_only or self.itr >= self.offline_only_iters
+
+    def _ready_for_updates(self, replay_buffer: DictReplayBuffer):
+        if not self.online_only:
+            return True
+        required_replay = max(self.min_replay_size, 1)
+        return len(replay_buffer) >= required_replay
+
     def _sample_training_batch(self, offline_data, replay_buffer: DictReplayBuffer):
-        if offline_data is None or len(replay_buffer) == 0 and self.offline_batch_ratio >= 1.0:
-            # Pure online or pure offline path
-            if offline_data is None:
-                if len(replay_buffer) == 0:
-                    return None
-                return replay_buffer.sample(self.batch_size, self.device)
-            return self._sample_offline_batch(offline_data, self.batch_size)
+        n_online = self._num_online_samples_per_batch()
+        if n_online >= self.batch_size:
+            if len(replay_buffer) == 0:
+                raise RuntimeError(
+                    "Pure-online Q-guided drifting requires replay data before "
+                    "sampling a training batch."
+                )
+            return replay_buffer.sample(self.batch_size, self.device)
 
         if len(replay_buffer) == 0 or self.offline_batch_ratio >= 1.0:
             return self._sample_offline_batch(offline_data, self.batch_size)
 
-        n_offline = int(round(self.batch_size * self.offline_batch_ratio))
-        n_online = self.batch_size - n_offline
+        n_offline = self.batch_size - n_online
         if n_online <= 0:
             return self._sample_offline_batch(offline_data, self.batch_size)
 
@@ -444,7 +497,7 @@ class TrainQGuidedDriftingAgent(TrainAgent):
                     "success_rate": 0.0,
                     "avg_traj_length": 0.0,
                 }
-                if self.itr >= self.offline_only_iters:
+                if self._should_collect_rollout():
                     (
                         self.prev_obs_venv,
                         cnt_train_step,
@@ -459,22 +512,29 @@ class TrainQGuidedDriftingAgent(TrainAgent):
                 critic_loss = 0.0
                 actor_metrics = {}
                 critic_metrics = {}
-                for _ in range(self.updates_per_itr):
-                    batch = self._sample_training_batch(offline_data, replay_buffer)
-                    if batch is None:
-                        # Not enough online data yet; skip gradient updates.
-                        continue
-                    (
-                        actor_loss_t,
-                        critic_loss_t,
-                        actor_metrics,
-                        critic_metrics,
-                    ) = self._update_once(batch)
-                    actor_loss = float(actor_loss_t.item())
-                    critic_loss = float(critic_loss_t.item())
-
-                self.actor_lr_scheduler.step()
-                self.critic_lr_scheduler.step()
+                update_ready = self._ready_for_updates(replay_buffer)
+                if update_ready:
+                    for _ in range(self.updates_per_itr):
+                        batch = self._sample_training_batch(offline_data, replay_buffer)
+                        (
+                            actor_loss_t,
+                            critic_loss_t,
+                            actor_metrics,
+                            critic_metrics,
+                        ) = self._update_once(batch)
+                        actor_loss = float(actor_loss_t.item())
+                        critic_loss = float(critic_loss_t.item())
+                    self.actor_lr_scheduler.step()
+                    self.critic_lr_scheduler.step()
+                else:
+                    actor_metrics = {
+                        "actor/loss": 0.0,
+                        "train/update_skipped_for_replay_warmup": 1.0,
+                    }
+                    critic_metrics = {
+                        "critic/loss": 0.0,
+                        "train/update_skipped_for_replay_warmup": 1.0,
+                    }
 
             if self.itr % self.save_model_freq == 0 or self.itr == self.n_train_itr - 1:
                 self.save_model()
@@ -505,6 +565,7 @@ class TrainQGuidedDriftingAgent(TrainAgent):
                         "success rate - train": rollout_metrics["success_rate"],
                         "num episode - train": rollout_metrics["num_episode_finished"],
                         "avg traj length - train": rollout_metrics["avg_traj_length"],
+                        "replay size - train": len(replay_buffer),
                     }
                     log_payload.update(actor_metrics)
                     log_payload.update(critic_metrics)

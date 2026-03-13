@@ -177,6 +177,21 @@ files may still be legacy pre-training datasets without `rewards` and
 for smoke/debugging compatibility, but proper Q-guided image training should
 use datasets regenerated with `script/dataset/process_robomimic_dataset.py`.
 
+### Pure Online Q-Guided Drifting
+
+Pure online mode keeps the same critic-guided drifting actor update, but drops
+the offline reward dataset assumption entirely:
+
+- Use a pre-trained drifting checkpoint via `base_policy_path`.
+- Leave `offline_dataset_path: null` and `offline_dataset: null`.
+- Set `offline_batch_ratio: 0.0` and `offline_only_iters: 0`.
+- Use `min_replay_size` to delay critic/actor updates until the replay buffer
+  has enough online transitions.
+
+The new `ft_qguided_drifting_online_*` configs are the recommended starting
+point when your demonstrations are reward-less and only environment rollouts
+provide rewards.
+
 ### Training Commands
 
 #### Gym / Locomotion
@@ -197,6 +212,22 @@ python script/run.py --config-name=ft_qguided_drifting_transformer \
 # Humanoid (Transformer)
 python script/run.py --config-name=ft_qguided_drifting_transformer \
     --config-path=$REINFLOW_DIR/cfg/gym/finetune/Humanoid-v3
+```
+
+#### Pure Online Gym / Locomotion
+
+```bash
+# Hopper (UNet1D, pure online)
+python script/run.py --config-name=ft_qguided_drifting_online_unet1d \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/hopper-v2
+
+# Walker2d (UNet1D, pure online)
+python script/run.py --config-name=ft_qguided_drifting_online_unet1d \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/walker2d-v2
+
+# Kitchen Partial (UNet1D, pure online)
+python script/run.py --config-name=ft_qguided_drifting_online_unet1d \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/kitchen-partial-v0
 ```
 
 #### Kitchen
