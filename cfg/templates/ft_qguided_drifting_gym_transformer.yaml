@@ -1,3 +1,4 @@
+# @package _global_
 ######################################################################
 env_suite: gym
 ######################################################################
@@ -117,4 +118,3 @@ offline_dataset:
   horizon_steps: ${horizon_steps}
   cond_steps: ${cond_steps}
   device: ${device}
-

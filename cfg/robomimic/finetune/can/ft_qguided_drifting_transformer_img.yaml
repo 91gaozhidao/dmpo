@@ -1,6 +1,10 @@
+# @package _global_
 defaults:
   - /templates/ft_qguided_drifting_robomimic_transformer_img
   - _self_
+hydra:
+  searchpath:
+    - file://${oc.env:REINFLOW_DIR}/cfg
 env_name: can
 obs_dim: 9
 cond_steps: 1
@@ -23,4 +27,3 @@ low_dim_keys:
   - robot0_gripper_qpos
 image_keys:
   - robot0_eye_in_hand_image
-

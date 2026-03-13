@@ -256,15 +256,15 @@ python script/run.py --config-name=pre_drifting_transformer_img \
 ```bash
 # Gym / Locomotion (Transformer backbone)
 python script/run.py --config-name=ft_qguided_drifting_transformer \
-    --config-path=cfg/gym/finetune/hopper-v2
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/hopper-v2
 
 # Gym / Locomotion (UNet1D backbone)
 python script/run.py --config-name=ft_qguided_drifting_unet1d \
-    --config-path=cfg/gym/finetune/hopper-v2
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/hopper-v2
 
 # RoboMimic / Image (Transformer backbone)
 python script/run.py --config-name=ft_qguided_drifting_transformer_img \
-    --config-path=cfg/robomimic/finetune/lift
+    --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/lift
 ```
 
 ### Evaluation

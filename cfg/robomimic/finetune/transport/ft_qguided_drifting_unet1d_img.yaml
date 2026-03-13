@@ -1,6 +1,10 @@
+# @package _global_
 defaults:
   - /templates/ft_qguided_drifting_robomimic_unet1d_img
   - _self_
+hydra:
+  searchpath:
+    - file://${oc.env:REINFLOW_DIR}/cfg
 env_name: transport
 obs_dim: 18
 cond_steps: 1

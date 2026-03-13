@@ -178,19 +178,19 @@ Each iteration:
 ```bash
 # Hopper (Transformer)
 python script/run.py --config-name=ft_qguided_drifting_transformer \
-    --config-path=cfg/gym/finetune/hopper-v2
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/hopper-v2
 
 # Walker2d (UNet1D)
 python script/run.py --config-name=ft_qguided_drifting_unet1d \
-    --config-path=cfg/gym/finetune/walker2d-v2
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/walker2d-v2
 
 # Ant (Transformer)
 python script/run.py --config-name=ft_qguided_drifting_transformer \
-    --config-path=cfg/gym/finetune/ant-v2
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/ant-v2
 
 # Humanoid (Transformer)
 python script/run.py --config-name=ft_qguided_drifting_transformer \
-    --config-path=cfg/gym/finetune/Humanoid-v3
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/Humanoid-v3
 ```
 
 #### Kitchen
@@ -198,15 +198,15 @@ python script/run.py --config-name=ft_qguided_drifting_transformer \
 ```bash
 # Kitchen Complete (Transformer)
 python script/run.py --config-name=ft_qguided_drifting_transformer \
-    --config-path=cfg/gym/finetune/kitchen-complete-v0
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/kitchen-complete-v0
 
 # Kitchen Partial (UNet1D)
 python script/run.py --config-name=ft_qguided_drifting_unet1d \
-    --config-path=cfg/gym/finetune/kitchen-partial-v0
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/kitchen-partial-v0
 
 # Kitchen Mixed (Transformer)
 python script/run.py --config-name=ft_qguided_drifting_transformer \
-    --config-path=cfg/gym/finetune/kitchen-mixed-v0
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/kitchen-mixed-v0
 ```
 
 #### RoboMimic (Image-based)
@@ -214,19 +214,19 @@ python script/run.py --config-name=ft_qguided_drifting_transformer \
 ```bash
 # Lift (Transformer with ViT)
 python script/run.py --config-name=ft_qguided_drifting_transformer_img \
-    --config-path=cfg/robomimic/finetune/lift
+    --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/lift
 
 # Can (UNet1D with ViT)
 python script/run.py --config-name=ft_qguided_drifting_unet1d_img \
-    --config-path=cfg/robomimic/finetune/can
+    --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/can
 
 # Square (Transformer with ViT)
 python script/run.py --config-name=ft_qguided_drifting_transformer_img \
-    --config-path=cfg/robomimic/finetune/square
+    --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/square
 
 # Transport (UNet1D with ViT)
 python script/run.py --config-name=ft_qguided_drifting_unet1d_img \
-    --config-path=cfg/robomimic/finetune/transport
+    --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/transport
 ```
 
 ### Setting `base_policy_path`
@@ -235,7 +235,7 @@ Fine-tuning requires a pre-trained checkpoint. Set `base_policy_path` in the con
 
 ```bash
 python script/run.py --config-name=ft_qguided_drifting_transformer \
-    --config-path=cfg/gym/finetune/hopper-v2 \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/hopper-v2 \
     base_policy_path=/path/to/pretrained/state_200000.pt
 ```
 
@@ -312,7 +312,7 @@ python script/run.py --config-name=eval_drifting_transformer_img \
 4. **Fine-tune**:
    ```bash
    python script/run.py --config-name=ft_qguided_drifting_transformer_img \
-       --config-path=cfg/robomimic/finetune/lift \
+       --config-path=$REINFLOW_DIR/cfg/robomimic/finetune/lift \
        base_policy_path=/path/to/pretrain_checkpoint.pt
    ```
 
@@ -351,7 +351,7 @@ python script/run.py --config-name=eval_drifting_transformer_img \
 4. **Fine-tune**:
    ```bash
    python script/run.py --config-name=ft_qguided_drifting_transformer \
-       --config-path=cfg/gym/finetune/hopper-v2 \
+       --config-path=$REINFLOW_DIR/cfg/gym/finetune/hopper-v2 \
        base_policy_path=/path/to/pretrain_checkpoint.pt
    ```
 
@@ -373,7 +373,7 @@ python script/run.py --config-name=pre_drifting_transformer \
 
 # Fine-tune
 python script/run.py --config-name=ft_qguided_drifting_transformer \
-    --config-path=cfg/gym/finetune/kitchen-partial-v0 \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/kitchen-partial-v0 \
     base_policy_path=/path/to/checkpoint.pt
 ```
 
@@ -456,7 +456,7 @@ For fine-tuning, to resume from an existing Q-Guided checkpoint (not the pre-tra
 
 ```bash
 python script/run.py --config-name=ft_qguided_drifting_transformer \
-    --config-path=cfg/gym/finetune/hopper-v2 \
+    --config-path=$REINFLOW_DIR/cfg/gym/finetune/hopper-v2 \
     base_policy_path=null \
     logdir=/path/to/existing/finetune/dir
 ```

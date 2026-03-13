@@ -119,11 +119,106 @@ class TestRunLauncherOfflineDatasetPath:
 
 
 # ===================================================================
-# 3. CriticObsAct – residual_style selects ResidualMLP
+# 3. Hydra compose – qguided task configs stay top-level
+# ===================================================================
+
+class TestQGuidedHydraCompose:
+    @pytest.fixture(autouse=True)
+    def _set_env(self, monkeypatch):
+        pytest.importorskip("hydra")
+        monkeypatch.setenv("REINFLOW_DIR", REPO_ROOT)
+        monkeypatch.setenv("REINFLOW_DATA_DIR", os.path.join(REPO_ROOT, "data"))
+        monkeypatch.setenv("REINFLOW_LOG_DIR", os.path.join(REPO_ROOT, "log"))
+        monkeypatch.setenv("REINFLOW_WANDB_ENTITY", "test-entity")
+
+        from omegaconf import OmegaConf
+
+        if not OmegaConf.has_resolver("eval"):
+            OmegaConf.register_new_resolver("eval", eval)
+
+        yield
+
+        from hydra.core.global_hydra import GlobalHydra
+
+        GlobalHydra.instance().clear()
+
+    def _compose_task(self, rel_config_dir, config_name):
+        from hydra import compose, initialize_config_dir
+        from hydra.core.global_hydra import GlobalHydra
+        from omegaconf import OmegaConf
+
+        GlobalHydra.instance().clear()
+        config_dir = os.path.join(REPO_ROOT, rel_config_dir)
+        with initialize_config_dir(config_dir=config_dir, version_base=None):
+            cfg = compose(config_name=config_name)
+        OmegaConf.resolve(cfg)
+        return cfg
+
+    def test_gym_transformer_task_compose_from_task_dir(self):
+        cfg = self._compose_task(
+            "cfg/gym/finetune/hopper-v2",
+            "ft_qguided_drifting_transformer",
+        )
+        assert cfg._target_ == (
+            "agent.finetune.drifting.train_qguided_drifting_agent."
+            "TrainQGuidedDriftingAgent"
+        )
+        for key in ("logdir", "base_policy_path", "train", "env", "model"):
+            assert key in cfg
+        assert "templates" not in cfg
+        assert cfg.env_name == "hopper-medium-v2"
+
+    def test_gym_unet_task_compose_from_task_dir(self):
+        cfg = self._compose_task(
+            "cfg/gym/finetune/hopper-v2",
+            "ft_qguided_drifting_unet1d",
+        )
+        assert cfg.model.policy._target_ == (
+            "model.drifting.backbone.conditional_unet1d.ConditionalUnet1D"
+        )
+        assert cfg.train.batch_size == 256
+        assert "templates" not in cfg
+
+    def test_robomimic_transformer_task_compose_from_task_dir(self):
+        cfg = self._compose_task(
+            "cfg/robomimic/finetune/can",
+            "ft_qguided_drifting_transformer_img",
+        )
+        assert cfg._target_ == (
+            "agent.finetune.drifting.train_qguided_drifting_agent."
+            "TrainQGuidedDriftingAgent"
+        )
+        assert cfg.robomimic_env_cfg_path == "cfg/robomimic/env_meta/can-img.json"
+        assert cfg.shape_meta.obs.rgb.shape == [3, 96, 96]
+        assert cfg.image_keys == ["robot0_eye_in_hand_image"]
+        assert "templates" not in cfg
+
+    def test_robomimic_unet_task_compose_from_task_dir(self):
+        cfg = self._compose_task(
+            "cfg/robomimic/finetune/can",
+            "ft_qguided_drifting_unet1d_img",
+        )
+        assert cfg.model.policy._target_ == (
+            "model.drifting.backbone.conditional_unet1d.ConditionalUnet1D"
+        )
+        assert cfg.low_dim_keys == [
+            "robot0_eef_pos",
+            "robot0_eef_quat",
+            "robot0_gripper_qpos",
+        ]
+        assert "templates" not in cfg
+
+
+# ===================================================================
+# 4. CriticObsAct – residual_style selects ResidualMLP
 # ===================================================================
 
 class TestCriticResidualStyle:
     """``CriticObsAct(residual_style=True)`` must use ``ResidualMLP``."""
+
+    @pytest.fixture(autouse=True)
+    def _require_torch(self):
+        pytest.importorskip("torch")
 
     def test_residual_style_true_uses_residual_mlp(self):
         import torch
@@ -179,7 +274,7 @@ class TestCriticResidualStyle:
 
 
 # ===================================================================
-# 4. Rollout metric accounting – firsts_trajs seeding
+# 5. Rollout metric accounting – firsts_trajs seeding
 # ===================================================================
 
 class TestRolloutMetricAccounting:
@@ -306,7 +401,7 @@ class TestRolloutMetricAccounting:
 
 
 # ===================================================================
-# 5. download_url helpers – _resolve_env_name / _resolve_dataset_path
+# 6. download_url helpers – _resolve_env_name / _resolve_dataset_path
 # ===================================================================
 
 class TestResolveHelpers:

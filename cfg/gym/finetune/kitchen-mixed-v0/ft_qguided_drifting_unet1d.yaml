@@ -1,6 +1,10 @@
+# @package _global_
 defaults:
   - /templates/ft_qguided_drifting_gym_unet1d
   - _self_
+hydra:
+  searchpath:
+    - file://${oc.env:REINFLOW_DIR}/cfg
 env_name: kitchen-mixed-v0
 action_dim: 9
 horizon_steps: 4

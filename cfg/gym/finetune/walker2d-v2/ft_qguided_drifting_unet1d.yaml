@@ -1,6 +1,10 @@
+# @package _global_
 defaults:
   - /templates/ft_qguided_drifting_gym_unet1d
   - _self_
+hydra:
+  searchpath:
+    - file://${oc.env:REINFLOW_DIR}/cfg
 env_name: walker2d-medium-v2
 action_dim: 6
 horizon_steps: 4
@@ -9,4 +13,3 @@ obs_dim: 17
 cond_steps: 1
 max_episode_steps: 1000
 best_reward_threshold_for_success: 3
-
