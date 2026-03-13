@@ -228,3 +228,115 @@ class ViTCritic(CriticObs):
             feat = self.compress.forward(feat, state)
         feat = torch.cat([feat, state], dim=-1)
         return super().forward(feat)
+
+
+class ViTCriticObsAct(torch.nn.Module):
+    """ViT + MLP double critic for image-conditioned Q(s, a)."""
+
+    def __init__(
+        self,
+        backbone,
+        cond_dim,
+        action_dim,
+        action_steps=1,
+        img_cond_steps=1,
+        spatial_emb=128,
+        dropout=0,
+        augment=False,
+        num_img=1,
+        mlp_dims=None,
+        activation_type="Mish",
+        use_layernorm=False,
+        residual_style=False,
+        double_q=True,
+        **kwargs,
+    ):
+        super().__init__()
+        if mlp_dims is None:
+            mlp_dims = [256, 256, 256]
+
+        self.backbone = backbone
+        self.num_img = num_img
+        self.img_cond_steps = img_cond_steps
+        self.augment = augment
+        self.action_dim = action_dim
+        self.action_steps = action_steps
+        self.double_q = double_q
+
+        if num_img > 1:
+            self.compress1 = SpatialEmb(
+                num_patch=self.backbone.num_patch,
+                patch_dim=self.backbone.patch_repr_dim,
+                prop_dim=cond_dim,
+                proj_dim=spatial_emb,
+                dropout=dropout,
+            )
+            self.compress2 = deepcopy(self.compress1)
+        else:
+            self.compress = SpatialEmb(
+                num_patch=self.backbone.num_patch,
+                patch_dim=self.backbone.patch_repr_dim,
+                prop_dim=cond_dim,
+                proj_dim=spatial_emb,
+                dropout=dropout,
+            )
+
+        if augment:
+            self.aug = RandomShiftsAug(pad=4)
+
+        critic_input_dim = spatial_emb * num_img + cond_dim + action_dim * action_steps
+        mlp_dims = [critic_input_dim] + mlp_dims + [1]
+        model_cls = ResidualMLP if residual_style else MLP
+        self.Q1 = model_cls(
+            mlp_dims,
+            activation_type=activation_type,
+            out_activation_type="Identity",
+            use_layernorm=use_layernorm,
+        )
+        if double_q:
+            self.Q2 = model_cls(
+                mlp_dims,
+                activation_type=activation_type,
+                out_activation_type="Identity",
+                use_layernorm=use_layernorm,
+            )
+
+    def _encode_obs(self, cond: dict, no_augment: bool = False):
+        B, _, C, H, W = cond["rgb"].shape
+        state = cond["state"].view(B, -1)
+        rgb = cond["rgb"][:, -self.img_cond_steps :]
+        t_rgb = rgb.shape[1]
+
+        if self.num_img > 1:
+            rgb = rgb.reshape(B, t_rgb, self.num_img, 3, H, W)
+            rgb = einops.rearrange(rgb, "b t n c h w -> b n (t c) h w")
+        else:
+            rgb = einops.rearrange(rgb, "b t c h w -> b (t c) h w")
+
+        rgb = rgb.float()
+        if self.num_img > 1:
+            rgb1 = rgb[:, 0]
+            rgb2 = rgb[:, 1]
+            if self.augment and not no_augment:
+                rgb1 = self.aug(rgb1)
+                rgb2 = self.aug(rgb2)
+            feat1 = self.compress1.forward(self.backbone(rgb1), state)
+            feat2 = self.compress2.forward(self.backbone(rgb2), state)
+            feat = torch.cat([feat1, feat2], dim=-1)
+        else:
+            if self.augment and not no_augment:
+                rgb = self.aug(rgb)
+            feat = self.compress.forward(self.backbone(rgb), state)
+
+        return torch.cat([feat, state], dim=-1)
+
+    def forward(self, cond: dict, action, no_augment: bool = False):
+        obs_feat = self._encode_obs(cond, no_augment=no_augment)
+        B = obs_feat.shape[0]
+        action = action.view(B, -1)
+        critic_input = torch.cat([obs_feat, action], dim=-1)
+        q1 = self.Q1(critic_input).squeeze(1)
+        if hasattr(self, "Q2"):
+            q2 = self.Q2(critic_input).squeeze(1)
+            return q1, q2
+        return q1

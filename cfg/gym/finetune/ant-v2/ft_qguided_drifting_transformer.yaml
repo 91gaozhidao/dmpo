@@ -1,0 +1,12 @@
+defaults:
+  - /templates/ft_qguided_drifting_gym_transformer
+  - _self_
+env_name: ant-medium-expert-v2
+action_dim: 8
+horizon_steps: 4
+act_steps: 4
+obs_dim: 111
+cond_steps: 1
+max_episode_steps: 1000
+best_reward_threshold_for_success: 3
+

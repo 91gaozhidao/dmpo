@@ -303,14 +303,29 @@ class StitchedSequenceQLearningDataset(StitchedSequenceDataset):
         )  # more recent is at the end
         conditions = {"state": states, "next_state": next_states}
         if self.use_img:
-            images = self.images[(start - num_before_start) : end]
+            history_images = self.images[(start - num_before_start) : end]
             images = torch.stack(
                 [
-                    images[max(num_before_start - t, 0)]
+                    history_images[max(num_before_start - t, 0)]
                     for t in reversed(range(self.img_cond_steps))
                 ]
             )
             conditions["rgb"] = images
+            if idx < len(self.indices) - self.horizon_steps:
+                next_images = self.images[
+                    (start - num_before_start + self.horizon_steps) : start
+                    + 1
+                    + self.horizon_steps
+                ]
+            else:
+                next_images = torch.zeros_like(history_images)
+            next_images = torch.stack(
+                [
+                    next_images[max(num_before_start - t, 0)]
+                    for t in reversed(range(self.img_cond_steps))
+                ]
+            )
+            conditions["next_rgb"] = next_images
         if self.get_mc_return:
             reward_to_gos = self.reward_to_go[start : (start + 1)]
             batch = TransitionWithReturn(

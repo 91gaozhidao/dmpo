@@ -1,0 +1,12 @@
+defaults:
+  - /templates/ft_qguided_drifting_gym_transformer
+  - _self_
+env_name: kitchen-complete-v0
+action_dim: 9
+horizon_steps: 4
+act_steps: 4
+obs_dim: 60
+cond_steps: 1
+max_episode_steps: 280
+best_reward_threshold_for_success: 4.0
+
