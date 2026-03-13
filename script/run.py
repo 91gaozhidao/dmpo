@@ -116,6 +116,22 @@ def main(cfg: OmegaConf):
             log.info(f"Downloading dataset from {download_url} to {download_target}")
             gdown.download_folder(url=download_url, output=download_target)
 
+    # For Q-guided fine-tuning: download offline dataset if needed
+    if "offline_dataset_path" in cfg and cfg.offline_dataset_path:
+        if is_hf_path(cfg.offline_dataset_path):
+            # Download from Hugging Face Hub
+            local_path = resolve_dataset_path(cfg.offline_dataset_path)
+            cfg.offline_dataset_path = local_path
+            # Also update offline_dataset.dataset_path if it exists (for hydra instantiate)
+            if "offline_dataset" in cfg and "dataset_path" in cfg.offline_dataset:
+                cfg.offline_dataset.dataset_path = local_path
+        elif not os.path.exists(cfg.offline_dataset_path):
+            # Fallback to Google Drive download (legacy support)
+            download_url = get_dataset_download_url(cfg)
+            download_target = os.path.dirname(cfg.offline_dataset_path)
+            log.info(f"Downloading offline dataset from {download_url} to {download_target}")
+            gdown.download_folder(url=download_url, output=download_target)
+
     # For fine-tuning/pre-training: download normalization if needed
     # DMPO Authors: support hf:// prefix for Hugging Face downloads
     if "normalization_path" in cfg and cfg.normalization_path:
