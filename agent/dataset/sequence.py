@@ -27,6 +27,32 @@ TransitionWithReturn = namedtuple(
 )
 
 
+def _dataset_keys(dataset):
+    if hasattr(dataset, "files"):
+        return set(dataset.files)
+    return set(dataset.keys())
+
+
+def _is_legacy_robomimic_image_dataset(dataset, dataset_path):
+    keys = _dataset_keys(dataset)
+    normalized_path = str(dataset_path).replace("\\", "/").lower()
+    return (
+        "robomimic" in normalized_path
+        and "images" in keys
+        and "traj_lengths" in keys
+    )
+
+
+def _infer_terminals_from_traj_lengths(traj_lengths, total_num_steps):
+    terminals = np.zeros(total_num_steps, dtype=bool)
+    episode_end_indices = np.cumsum(traj_lengths) - 1
+    episode_end_indices = episode_end_indices[
+        (episode_end_indices >= 0) & (episode_end_indices < total_num_steps)
+    ]
+    terminals[episode_end_indices] = True
+    return terminals
+
+
 class StitchedSequenceDataset(torch.utils.data.Dataset):
     """
     Load stitched trajectories of states/actions/images, and 1-D array of traj_lengths, from npz or pkl file.
@@ -211,14 +237,41 @@ class StitchedSequenceQLearningDataset(StitchedSequenceDataset):
         # discount factor
         self.discount_factor = discount_factor
 
+        keys = _dataset_keys(dataset)
+        missing_keys = [
+            key for key in ("rewards", "terminals") if key not in keys
+        ]
+        if missing_keys:
+            if not _is_legacy_robomimic_image_dataset(dataset, dataset_path):
+                raise KeyError(
+                    f"{dataset_path} is missing required keys for Q-learning: "
+                    f"{missing_keys}"
+                )
+            log.warning(
+                "Legacy RoboMimic image dataset %s is missing %s. "
+                "Synthesizing zero rewards and episode-end terminals for "
+                "smoke/debugging only. Reprocess with "
+                "script/dataset/process_robomimic_dataset.py for proper "
+                "Q-guided training.",
+                dataset_path,
+                missing_keys,
+            )
+
+        rewards = (
+            dataset["rewards"][:total_num_steps]
+            if "rewards" in keys
+            else np.zeros(total_num_steps, dtype=np.float32)
+        )
+        terminals = (
+            dataset["terminals"][:total_num_steps]
+            if "terminals" in keys
+            else _infer_terminals_from_traj_lengths(traj_lengths, total_num_steps)
+        )
+
         # rewards and dones(terminals)
-        self.rewards = (
-            torch.from_numpy(dataset["rewards"][:total_num_steps]).float().to(device)
-        )
+        self.rewards = torch.from_numpy(rewards).float().to(device)
         log.info(f"Rewards shape/type: {self.rewards.shape, self.rewards.dtype}")
-        self.dones = (
-            torch.from_numpy(dataset["terminals"][:total_num_steps]).to(device).float()
-        )
+        self.dones = torch.from_numpy(terminals).to(device).float()
         log.info(f"Dones shape/type: {self.dones.shape, self.dones.dtype}")
         
         super().__init__(

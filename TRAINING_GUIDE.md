@@ -171,6 +171,12 @@ Each iteration:
 
 **Dataset paths**: Q-guided fine-tuning configs use `offline_dataset_path` (not `train_dataset_path`) to specify the offline dataset for mixed batches. The launcher (`script/run.py`) automatically resolves `hf://` paths via HuggingFace Hub, and falls back to Google Drive download for missing local paths.
 
+For RoboMimic image tasks, the currently hosted `robomimic/*-img/train.npz`
+files may still be legacy pre-training datasets without `rewards` and
+`terminals`. The loader now synthesizes zero rewards and episode-end terminals
+for smoke/debugging compatibility, but proper Q-guided image training should
+use datasets regenerated with `script/dataset/process_robomimic_dataset.py`.
+
 ### Training Commands
 
 #### Gym / Locomotion

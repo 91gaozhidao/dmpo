@@ -211,6 +211,69 @@ class TestQGuidedHydraCompose:
 
 
 # ===================================================================
+# 3b. Legacy RoboMimic image datasets – qlearning compatibility
+# ===================================================================
+
+class TestLegacyRobomimicImageDatasetCompat:
+    @pytest.fixture(autouse=True)
+    def _require_torch(self):
+        pytest.importorskip("torch")
+
+    def test_legacy_robomimic_image_dataset_synthesizes_rewards_and_terminals(
+        self, tmp_path
+    ):
+        from agent.dataset.sequence import StitchedSequenceQLearningDataset
+
+        dataset_dir = tmp_path / "robomimic" / "can-img"
+        dataset_dir.mkdir(parents=True)
+        dataset_path = dataset_dir / "train.npz"
+        np.savez_compressed(
+            dataset_path,
+            states=np.zeros((5, 9), dtype=np.float32),
+            actions=np.zeros((5, 7), dtype=np.float32),
+            traj_lengths=np.array([2, 3], dtype=np.int64),
+            images=np.zeros((5, 3, 96, 96), dtype=np.uint8),
+        )
+
+        dataset = StitchedSequenceQLearningDataset(
+            dataset_path=str(dataset_path),
+            horizon_steps=1,
+            cond_steps=1,
+            img_cond_steps=1,
+            use_img=True,
+            device="cpu",
+        )
+
+        assert dataset.rewards.shape[0] == 5
+        assert np.allclose(dataset.rewards.cpu().numpy(), 0.0)
+        assert np.array_equal(
+            dataset.dones.cpu().numpy(),
+            np.array([0.0, 1.0, 0.0, 0.0, 1.0], dtype=np.float32),
+        )
+
+    def test_missing_rewards_still_errors_for_non_robomimic_dataset(self, tmp_path):
+        from agent.dataset.sequence import StitchedSequenceQLearningDataset
+
+        dataset_dir = tmp_path / "gym" / "hopper-v2"
+        dataset_dir.mkdir(parents=True)
+        dataset_path = dataset_dir / "train.npz"
+        np.savez_compressed(
+            dataset_path,
+            states=np.zeros((5, 11), dtype=np.float32),
+            actions=np.zeros((5, 3), dtype=np.float32),
+            traj_lengths=np.array([5], dtype=np.int64),
+        )
+
+        with pytest.raises(KeyError, match="missing required keys for Q-learning"):
+            StitchedSequenceQLearningDataset(
+                dataset_path=str(dataset_path),
+                horizon_steps=1,
+                cond_steps=1,
+                device="cpu",
+            )
+
+
+# ===================================================================
 # 4. CriticObsAct – residual_style selects ResidualMLP
 # ===================================================================
 

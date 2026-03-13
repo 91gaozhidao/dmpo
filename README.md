@@ -233,6 +233,12 @@ The launcher (`script/run.py`) automatically resolves three types of dataset pat
 
 All three support `hf://` prefix for HuggingFace Hub downloads. If a local path does not exist, the launcher falls back to the legacy Google Drive download via `script/download_url.py`.
 
+For RoboMimic image tasks, note that the currently hosted `robomimic/*-img/train.npz`
+files may be legacy pre-training datasets that omit `rewards` and `terminals`.
+The Q-learning loader now synthesizes zero rewards and episode-end terminals for
+smoke/debugging compatibility, but serious Q-guided experiments should reprocess
+the raw RoboMimic HDF5 with `script/dataset/process_robomimic_dataset.py`.
+
 ## Training
 
 ### Offline Pre-training
