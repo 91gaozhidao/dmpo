@@ -64,7 +64,8 @@ def _resolve_env_name(cfg):
             return env_val.name
     raise ValueError(
         "Cannot resolve environment name from config: "
-        "expected cfg.env_name or cfg.env (str) or cfg.env.name"
+        "expected cfg.env_name or cfg.env (str) or cfg.env.name. "
+        f"Available keys: {list(cfg.__dict__.keys()) if hasattr(cfg, '__dict__') else '?'}"
     )
 
 

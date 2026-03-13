@@ -198,7 +198,7 @@ Datasets are automatically downloaded from D4RL on first use. The expected direc
 data/
 ├── gym/
 │   ├── hopper-medium-v2/
-│   │   ├── train.npz          # Pre-training data
+│   │   ├── train.npz          # Pre-training data / offline dataset
 │   │   └── normalization.npz  # Obs/act normalization statistics
 │   ├── walker2d-medium-v2/
 │   ├── ant-medium-expert-v2/
@@ -222,6 +222,16 @@ data/
 │   ├── square/
 │   └── transport/
 ```
+
+### Dataset Path Handling
+
+The launcher (`script/run.py`) automatically resolves three types of dataset paths:
+
+- **`train_dataset_path`** — used by pre-training configs.
+- **`offline_dataset_path`** — used by Q-guided fine-tuning configs for the offline dataset in mixed (online + offline) batches.
+- **`normalization_path`** — observation normalization statistics.
+
+All three support `hf://` prefix for HuggingFace Hub downloads. If a local path does not exist, the launcher falls back to the legacy Google Drive download via `script/download_url.py`.
 
 ## Training
 

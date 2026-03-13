@@ -242,7 +242,7 @@ class TrainQGuidedDriftingAgent(TrainAgent):
         firsts_trajs = np.zeros((self.n_steps + 1, self.n_envs))
         # Seed the initial episode boundary: 1 on first rollout (fresh reset),
         # or carry over done flags from the previous rollout.
-        if not hasattr(self, "done_venv") or self.done_venv is None:
+        if getattr(self, "done_venv", None) is None:
             firsts_trajs[0] = 1
         else:
             firsts_trajs[0] = self.done_venv
