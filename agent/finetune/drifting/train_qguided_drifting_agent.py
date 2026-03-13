@@ -240,6 +240,10 @@ class TrainQGuidedDriftingAgent(TrainAgent):
         cnt_train_step: int,
     ):
         firsts_trajs = np.zeros((self.n_steps + 1, self.n_envs))
+        if cnt_train_step == 0:
+            firsts_trajs[0] = 1
+        else:
+            firsts_trajs[0] = self.done_venv
         reward_trajs = np.zeros((self.n_steps, self.n_envs))
 
         for step in range(self.n_steps):
@@ -272,6 +276,7 @@ class TrainQGuidedDriftingAgent(TrainAgent):
             prev_obs_venv = obs_venv
             cnt_train_step += self.n_envs * self.act_steps
 
+        self.done_venv = done_venv
         metrics = self._summarize_rollout_metrics(firsts_trajs, reward_trajs)
         return prev_obs_venv, cnt_train_step, metrics
 
