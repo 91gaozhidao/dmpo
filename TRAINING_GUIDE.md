@@ -143,6 +143,10 @@ python script/run.py --config-name=pre_drifting_transformer_img \
 
 ## Q-Guided Drifting Fine-tuning
 
+This is the only recommended online RL fine-tuning path for drifting in the
+current repository. PPO/GRPO-style adapters are not part of the drifting
+training surface here.
+
 ### How It Works
 
 Q-Guided fine-tuning improves the pre-trained policy through online environment interaction while preserving drifting's native update mechanism:
@@ -192,8 +196,8 @@ the offline reward dataset assumption entirely:
   launcher.
 
 The new `ft_qguided_drifting_online_*` configs are the recommended starting
-point when your demonstrations are reward-less and only environment rollouts
-provide rewards.
+point for current drifting online RL runs, especially when demonstrations are
+reward-less and only environment rollouts provide rewards.
 
 ### Training Commands
 
