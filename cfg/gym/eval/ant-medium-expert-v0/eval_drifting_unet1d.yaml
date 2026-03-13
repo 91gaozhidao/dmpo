@@ -19,7 +19,7 @@ hydra:
 _target_: agent.eval.eval_drifting_agent.EvalDriftingAgent
 
 name: ${env_name}_eval_drifting_unet1d_ta${horizon_steps}
-logdir: ${oc.env:DPPO_LOG_DIR}/gym-eval/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
+logdir: ${oc.env:REINFLOW_LOG_DIR}/gym-eval/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
 base_policy_path:
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/gym/${env_name}/normalization.npz
 

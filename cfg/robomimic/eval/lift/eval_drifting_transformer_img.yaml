@@ -6,7 +6,7 @@ hydra:
 _target_: agent.eval.eval_drifting_img_agent.EvalImgDriftingAgent
 
 name: ${env_name}_eval_drifting_transformer_img_ta${horizon_steps}
-logdir: ${oc.env:DPPO_LOG_DIR}/robomimic-eval/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
+logdir: ${oc.env:REINFLOW_LOG_DIR}/robomimic-eval/${name}/${now:%Y-%m-%d}_${now:%H-%M-%S}_${seed}
 base_policy_path:
 robomimic_env_cfg_path: cfg/robomimic/env_meta/${env_name}-img.json
 normalization_path: ${oc.env:REINFLOW_DATA_DIR}/robomimic/${env_name}-img/normalization.npz

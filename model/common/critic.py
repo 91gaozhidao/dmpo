@@ -122,10 +122,10 @@ class CriticObsAct(torch.nn.Module):
         B = len(cond["state"])
 
         # flatten history
-        state = cond["state"].view(B, -1)
+        state = cond["state"].reshape(B, -1)
 
         # flatten action
-        action = action.view(B, -1)
+        action = action.reshape(B, -1)
 
         x = torch.cat((state, action), dim=-1)
         if hasattr(self, "Q2"):
@@ -333,7 +333,7 @@ class ViTCriticObsAct(torch.nn.Module):
     def forward(self, cond: dict, action, no_augment: bool = False):
         obs_feat = self._encode_obs(cond, no_augment=no_augment)
         B = obs_feat.shape[0]
-        action = action.view(B, -1)
+        action = action.reshape(B, -1)
         critic_input = torch.cat([obs_feat, action], dim=-1)
         q1 = self.Q1(critic_input).squeeze(1)
         if hasattr(self, "Q2"):
