@@ -22,6 +22,9 @@
 
 import os
 import json
+from util.python_compat import apply_collections_abc_compat
+
+apply_collections_abc_compat()
 
 try:
     from collections.abc import Iterable

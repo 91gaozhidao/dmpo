@@ -30,6 +30,9 @@ import gym
 import random
 import numpy as np
 from tqdm import tqdm
+from util.python_compat import apply_collections_abc_compat
+
+apply_collections_abc_compat()
 import d4rl.gym_mujoco  # Import required to register environments
 from copy import deepcopy
 

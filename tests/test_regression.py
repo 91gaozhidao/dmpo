@@ -119,6 +119,39 @@ class TestRunLauncherOfflineDatasetPath:
 
 
 # ===================================================================
+# 2b. Python 3.10 compat – kitchen / D4RL entrypoints
+# ===================================================================
+
+class TestPythonCompatForKitchen:
+    def test_collections_abc_aliases_are_backfilled(self):
+        import collections
+        from util.python_compat import apply_collections_abc_compat
+
+        apply_collections_abc_compat()
+
+        for name in ("Mapping", "MutableMapping", "Sequence"):
+            assert hasattr(collections, name), (
+                f"collections.{name} should be restored for legacy deps"
+            )
+
+    def test_run_py_applies_compat_before_d4rl_import(self):
+        run_py = os.path.join(REPO_ROOT, "script", "run.py")
+        with open(run_py, "r") as f:
+            src = f.read()
+
+        assert "from util.python_compat import apply_collections_abc_compat" in src
+        assert "apply_collections_abc_compat()" in src
+
+    def test_env_utils_applies_compat_before_env_creation(self):
+        env_utils_py = os.path.join(REPO_ROOT, "env", "gym_utils", "__init__.py")
+        with open(env_utils_py, "r") as f:
+            src = f.read()
+
+        assert "from util.python_compat import apply_collections_abc_compat" in src
+        assert "apply_collections_abc_compat()" in src
+
+
+# ===================================================================
 # 3. Hydra compose – qguided task configs stay top-level
 # ===================================================================
 
@@ -271,6 +304,31 @@ class TestLegacyRobomimicImageDatasetCompat:
                 cond_steps=1,
                 device="cpu",
             )
+
+
+# ===================================================================
+# 3c. RoboMimic drifting image pretrain configs – auto_resume override
+# ===================================================================
+
+class TestRobomimicDriftingImagePretrainConfigs:
+    def test_drifting_image_pretrain_configs_expose_auto_resume(self):
+        from omegaconf import OmegaConf
+
+        rel_paths = [
+            "cfg/robomimic/pretrain/lift/pre_drifting_unet1d_img.yaml",
+            "cfg/robomimic/pretrain/lift/pre_drifting_transformer_img.yaml",
+            "cfg/robomimic/pretrain/can/pre_drifting_unet1d_img.yaml",
+            "cfg/robomimic/pretrain/can/pre_drifting_transformer_img.yaml",
+            "cfg/robomimic/pretrain/square/pre_drifting_unet1d_img.yaml",
+            "cfg/robomimic/pretrain/square/pre_drifting_transformer_img.yaml",
+            "cfg/robomimic/pretrain/transport/pre_drifting_unet1d_img.yaml",
+            "cfg/robomimic/pretrain/transport/pre_drifting_transformer_img.yaml",
+        ]
+
+        for rel_path in rel_paths:
+            cfg = OmegaConf.load(os.path.join(REPO_ROOT, rel_path))
+            assert "auto_resume" in cfg, f"{rel_path} should define auto_resume"
+            assert cfg.auto_resume is True
 
 
 # ===================================================================

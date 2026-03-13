@@ -28,7 +28,9 @@ Revised by ReinFlow Authors to accomodate resume training and fixing the kitchen
 # clear python cache automatically.
 from util.clear_pycache import clean_pycache
 from util.dirs import REINFLOW_DIR
+from util.python_compat import apply_collections_abc_compat
 clean_pycache(directory=REINFLOW_DIR)
+apply_collections_abc_compat()
 
 # register kitchen tasks in advance. prevent env not found error. 
 import gym
