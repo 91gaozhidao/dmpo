@@ -47,13 +47,48 @@
 # Changes include: download D4RL official datasets for the Gym tasks, incorporate Humanoid-v2 expert data and 
 # pre-trained flow matching policies for all Gym, Kitchen, and Robomimic tasks. 
 
+def _resolve_env_name(cfg):
+    """Resolve the environment name from config, supporting both old-style
+    ``cfg.env`` (pretrain/eval) and new-style ``cfg.env_name`` (Q-guided
+    fine-tune) layouts."""
+    # Prefer the nested env.name (Q-guided templates set env.name: ${env_name})
+    if hasattr(cfg, "env_name"):
+        return cfg.env_name
+    if hasattr(cfg, "env"):
+        # cfg.env may be a string (old pretrain configs) or a dict/DictConfig
+        env_val = cfg.env
+        if isinstance(env_val, str):
+            return env_val
+        # For DictConfig with a 'name' key (finetune env block)
+        if hasattr(env_val, "name"):
+            return env_val.name
+    raise ValueError(
+        "Cannot resolve environment name from config: "
+        "expected cfg.env_name or cfg.env (str) or cfg.env.name. "
+        f"Available keys: {list(cfg.__dict__.keys()) if hasattr(cfg, '__dict__') else '?'}"
+    )
+
+
+def _resolve_dataset_path(cfg):
+    """Return the dataset path string from whichever config key is present.
+
+    Q-guided fine-tune configs use ``offline_dataset_path``; pretrain configs
+    use ``train_dataset_path``.  Return the first one found, or ``""``."""
+    for key in ("train_dataset_path", "offline_dataset_path"):
+        val = cfg.get(key, None)
+        if val:
+            return str(val)
+    return ""
+
+
 def get_dataset_download_url(cfg):
     """
     Download processed train.npz and normalization.npz to the dataset paths specified in cfg.
     
     """
-    env = cfg.env
+    env = _resolve_env_name(cfg)
     use_d4rl_dataset=cfg.get('use_d4rl_dataset', False)
+    dataset_path = _resolve_dataset_path(cfg)
     # Gym
     if env == "hopper-medium-v2":
         if use_d4rl_dataset:
@@ -86,26 +121,26 @@ def get_dataset_download_url(cfg):
     elif env == "avoid" and cfg.mode == "d58_r12":  # M3
         return "https://drive.google.com/drive/u/1/folders/1mNXCIPnCO_FDBlEj95InA9eWJM2XcEEj"
     # Robomimic-PH
-    elif (env == "can" and "ph" in cfg.train_dataset_path and "img" not in cfg.train_dataset_path):
+    elif (env == "can" and "ph" in dataset_path and "img" not in dataset_path):
         return "https://drive.google.com/drive/folders/1rpVsdpqWPygL89E-t4SLQmZgwQ3mpNnY?usp=drive_link"
-    elif (env == "square" and "ph" in cfg.train_dataset_path and "img" not in cfg.train_dataset_path):
+    elif (env == "square" and "ph" in dataset_path and "img" not in dataset_path):
         return "https://drive.google.com/drive/folders/1wqqjT9JZ9LX11l2Sz_vGxfcT3BfcNrGk?usp=drive_link"
     # Robomimic-MH
-    elif env == "lift" and "img" not in cfg.train_dataset_path:  # state
+    elif env == "lift" and "img" not in dataset_path:  # state
         return "https://drive.google.com/drive/u/1/folders/1lbXgMKBTAiFdJqPZqWXpwjEyrVW16MBu"
-    elif env == "lift" and "img" in cfg.train_dataset_path:  # img
+    elif env == "lift" and "img" in dataset_path:  # img
         return "https://drive.google.com/drive/u/1/folders/1H-UncdzHx6wd5NWVzrQyftfGls7KGz1O"
-    elif env == "can" and "img" not in cfg.train_dataset_path:
+    elif env == "can" and "img" not in dataset_path:
         return "https://drive.google.com/drive/u/1/folders/1J1qSvsDEf40jnMZY9W0r6ww--E3MdmK3"
-    elif env == "can" and "img" in cfg.train_dataset_path:
+    elif env == "can" and "img" in dataset_path:
         return "https://drive.google.com/drive/u/1/folders/1VGp_5xXXb1-GJutdSc6AZSzXNk-6_vRz"
-    elif env == "square" and "img" not in cfg.train_dataset_path:
+    elif env == "square" and "img" not in dataset_path:
         return "https://drive.google.com/drive/u/1/folders/1mVVNOJ6wt2EXoapF7PKkcqxbsB9gvK-B"
-    elif env == "square" and "img" in cfg.train_dataset_path:
+    elif env == "square" and "img" in dataset_path:
         return "https://drive.google.com/drive/u/1/folders/1-aGqVeKLIzJCEst8p0ZTjfjkrXFfJLxa"
-    elif env == "transport" and "img" not in cfg.train_dataset_path:
+    elif env == "transport" and "img" not in dataset_path:
         return "https://drive.google.com/drive/u/1/folders/1EVHmFx-YdX4MEE1EjwduVayvaH9vvqvK"
-    elif env == "transport" and "img" in cfg.train_dataset_path:
+    elif env == "transport" and "img" in dataset_path:
         return "https://drive.google.com/drive/u/1/folders/1cOkAZQmmETYEPFrnnX0EuD6mv0kUfMO2"
     # Furniture-Bench
     elif env == "one_leg_low_dim":
@@ -126,7 +161,7 @@ def get_dataset_download_url(cfg):
 
 
 def get_normalization_download_url(cfg):
-    env = cfg.env_name
+    env = _resolve_env_name(cfg)
     use_d4rl_dataset=cfg.get('use_d4rl_dataset', False)
     # Gym
     if env == "hopper-medium-v2":

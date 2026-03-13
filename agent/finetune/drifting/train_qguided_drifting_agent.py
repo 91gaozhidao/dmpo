@@ -240,6 +240,12 @@ class TrainQGuidedDriftingAgent(TrainAgent):
         cnt_train_step: int,
     ):
         firsts_trajs = np.zeros((self.n_steps + 1, self.n_envs))
+        # Seed the initial episode boundary: 1 on first rollout (fresh reset),
+        # or carry over done flags from the previous rollout.
+        if getattr(self, "done_venv", None) is None:
+            firsts_trajs[0] = 1
+        else:
+            firsts_trajs[0] = self.done_venv
         reward_trajs = np.zeros((self.n_steps, self.n_envs))
 
         for step in range(self.n_steps):
@@ -272,6 +278,8 @@ class TrainQGuidedDriftingAgent(TrainAgent):
             prev_obs_venv = obs_venv
             cnt_train_step += self.n_envs * self.act_steps
 
+        # Persist done flags for the next rollout's firsts_trajs[0]
+        self.done_venv = done_venv
         metrics = self._summarize_rollout_metrics(firsts_trajs, reward_trajs)
         return prev_obs_venv, cnt_train_step, metrics
 
@@ -400,6 +408,7 @@ class TrainQGuidedDriftingAgent(TrainAgent):
                     or not hasattr(self, "prev_obs_venv")
                 ):
                     self.prev_obs_venv = self.reset_env_all()
+                    self.done_venv = None  # signal fresh reset to _collect_rollout
 
                 rollout_metrics = {
                     "num_episode_finished": 0,

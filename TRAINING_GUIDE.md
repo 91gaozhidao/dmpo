@@ -169,6 +169,8 @@ Each iteration:
    - Soft-update target critic.
 4. Periodically evaluate and checkpoint.
 
+**Dataset paths**: Q-guided fine-tuning configs use `offline_dataset_path` (not `train_dataset_path`) to specify the offline dataset for mixed batches. The launcher (`script/run.py`) automatically resolves `hf://` paths via HuggingFace Hub, and falls back to Google Drive download for missing local paths.
+
 ### Training Commands
 
 #### Gym / Locomotion
@@ -402,6 +404,8 @@ python script/run.py --config-name=ft_qguided_drifting_transformer \
 | `model.policy._target_` | Actor policy class | `model.drifting.drifting.DriftingPolicy` |
 | `model.critic._target_` | Critic class | `model.common.critic.CriticObsAct` |
 | `base_policy_path` | Pre-trained checkpoint path | `/path/to/state_200000.pt` |
+| `offline_dataset_path` | Offline dataset for Q-guided fine-tuning (supports `hf://` prefix and local paths) | `data/gym/hopper-medium-v2/train.npz` |
+| `normalization_path` | Observation normalization file | `data/gym/hopper-medium-v2/normalization.npz` |
 | `train.n_train_itr` | Total training iterations | `1000` |
 | `train.batch_size` | Batch size per update | `256` |
 | `train.actor_lr` | Actor learning rate | `1e-5` |
