@@ -116,8 +116,17 @@ def main(cfg: OmegaConf):
             log.info(f"Downloading dataset from {download_url} to {download_target}")
             gdown.download_folder(url=download_url, output=download_target)
 
+    requested_online_only = bool(cfg.get("train", {}).get("online_only", False))
+
     # For Q-guided fine-tuning: download offline dataset if needed
-    if "offline_dataset_path" in cfg and cfg.offline_dataset_path:
+    if requested_online_only and "offline_dataset_path" in cfg and cfg.offline_dataset_path:
+        log.info(
+            "Skipping offline dataset resolution because train.online_only=true."
+        )
+        cfg.offline_dataset_path = None
+        if "offline_dataset" in cfg:
+            cfg.offline_dataset = None
+    elif "offline_dataset_path" in cfg and cfg.offline_dataset_path:
         if is_hf_path(cfg.offline_dataset_path):
             # Download from Hugging Face Hub
             local_path = resolve_dataset_path(cfg.offline_dataset_path)

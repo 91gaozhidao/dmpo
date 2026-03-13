@@ -187,6 +187,9 @@ the offline reward dataset assumption entirely:
 - Set `offline_batch_ratio: 0.0` and `offline_only_iters: 0`.
 - Use `min_replay_size` to delay critic/actor updates until the replay buffer
   has enough online transitions.
+- If you start from an older mixed fine-tune config, passing
+  `train.online_only=true` now also disables offline dataset resolution in the
+  launcher.
 
 The new `ft_qguided_drifting_online_*` configs are the recommended starting
 point when your demonstrations are reward-less and only environment rollouts

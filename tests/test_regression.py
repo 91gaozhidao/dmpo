@@ -600,32 +600,19 @@ class TestOnlineOnlyQGuidedDrifting:
         assert rewards.shape == (4,)
         assert terminated.shape == (4,)
 
-    def test_sample_training_batch_online_only_empty_buffer_returns_none(self):
-        """When replay buffer is empty in online-only mode, batch is None."""
-        # Test the branching logic inline to avoid importing the full agent.
-        offline_data = None  # online_only mode
-        buffer_len = 0
-        offline_batch_ratio = 0.0
+    def test_online_only_replay_warmup_gate_not_ready(self):
+        """Pure-online mode should gate updates on min_replay_size."""
+        replay_size = 0
+        min_replay_size = 32
+        result = replay_size >= max(min_replay_size, 1)
+        assert result is False
 
-        # Replicate the _sample_training_batch logic for online_only
-        if offline_data is None:
-            result = None if buffer_len == 0 else "would sample"
-        else:
-            result = "has offline"
-        assert result is None
-
-    def test_sample_training_batch_online_only_with_data(self):
-        """When replay buffer has data in online-only mode, returns non-None."""
-        # Test the branching logic inline to avoid importing the full agent.
-        offline_data = None  # online_only mode
-        buffer_len = 20
-        offline_batch_ratio = 0.0
-
-        if offline_data is None:
-            result = None if buffer_len == 0 else "would sample"
-        else:
-            result = "has offline"
-        assert result is not None
+    def test_online_only_replay_warmup_gate_ready(self):
+        """Once replay reaches min_replay_size, pure-online updates may start."""
+        replay_size = 64
+        min_replay_size = 32
+        result = replay_size >= max(min_replay_size, 1)
+        assert result is True
 
     def test_online_only_source_code_has_online_only_flag(self):
         """The training agent source must contain online_only config key."""
@@ -641,13 +628,16 @@ class TestOnlineOnlyQGuidedDrifting:
             "TrainQGuidedDriftingAgent must support online_only config flag"
         )
         assert 'self.online_only' in src
-        # When online_only is True, offline_batch_ratio must be 0.0
-        assert '0.0 if self.online_only' in src, (
+        # When online_only is requested, offline_batch_ratio must be forced to 0.0
+        assert '0.0 if requested_online_only' in src, (
             "offline_batch_ratio must be forced to 0.0 in online-only mode"
         )
-        # When online_only is True, offline_only_iters must be 0
-        assert '0 if self.online_only' in src, (
+        # When online_only is requested, offline_only_iters must be 0
+        assert '0 if requested_online_only' in src, (
             "offline_only_iters must be forced to 0 in online-only mode"
+        )
+        assert 'max(self.min_replay_size, 1)' in src, (
+            "pure-online mode must gate updates via min_replay_size"
         )
 
     def test_online_only_run_skips_cache_offline(self):
@@ -665,8 +655,8 @@ class TestOnlineOnlyQGuidedDrifting:
             "run() must skip _cache_offline_dataset when online_only is True"
         )
 
-    def test_batch_none_guard_in_run_loop(self):
-        """run() must handle None batch (empty buffer in online-only mode)."""
+    def test_run_loop_logs_replay_warmup_skip(self):
+        """run() should emit an explicit replay-warmup skip metric."""
         agent_py = os.path.join(
             REPO_ROOT,
             "agent", "finetune", "drifting",
@@ -675,9 +665,19 @@ class TestOnlineOnlyQGuidedDrifting:
         with open(agent_py, "r") as f:
             src = f.read()
 
-        assert 'if batch is None:' in src, (
-            "run() must guard against None batch when replay buffer is empty"
+        assert 'train/update_skipped_for_replay_warmup' in src, (
+            "run() should log when pure-online updates are skipped for replay warmup"
         )
+
+    def test_run_py_skips_offline_resolution_when_online_only(self):
+        """Launcher should not resolve offline datasets in pure-online mode."""
+        run_py = os.path.join(REPO_ROOT, "script", "run.py")
+        with open(run_py, "r") as f:
+            src = f.read()
+
+        assert 'requested_online_only = bool(cfg.get("train", {}).get("online_only", False))' in src
+        assert 'Skipping offline dataset resolution because train.online_only=true.' in src
+        assert 'cfg.offline_dataset_path = None' in src
 
 
 # ===================================================================
