@@ -298,7 +298,7 @@ python script/run.py --config-name=eval_drifting_transformer_img \
    pip install -e ".[robomimic]"
    ```
 
-2. **Download dataset**: Datasets are auto-downloaded on first run via HuggingFace or Google Drive.
+2. **Download dataset**: Datasets are auto-downloaded on first run via HuggingFace (`hf://` prefix in config) when supported. For Q-guided fine-tuning, the `offline_dataset_path` config field supports the same `hf://` prefix and local path resolution.
 
 3. **Pre-train**:
    ```bash
@@ -401,7 +401,9 @@ python script/run.py --config-name=ft_qguided_drifting_transformer \
 | `model._target_` | Model class | `model.drifting.ft_qguided.qguided_drifting.QGuidedDrifting` |
 | `model.policy._target_` | Actor policy class | `model.drifting.drifting.DriftingPolicy` |
 | `model.critic._target_` | Critic class | `model.common.critic.CriticObsAct` |
+| `model.critic.residual_style` | Use ResidualMLP for Q networks (recommended for low-dim) | `true` |
 | `base_policy_path` | Pre-trained checkpoint path | `/path/to/state_200000.pt` |
+| `offline_dataset_path` | Offline dataset for mixed-batch training (local or `hf://`) | `data/gym/hopper-medium-v2/train.npz` |
 | `train.n_train_itr` | Total training iterations | `1000` |
 | `train.batch_size` | Batch size per update | `256` |
 | `train.actor_lr` | Actor learning rate | `1e-5` |

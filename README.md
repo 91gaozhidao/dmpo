@@ -134,7 +134,9 @@ dmpo/
 ├── script/
 │   ├── run.py                          # Main entry point (Hydra launcher)
 │   ├── set_path.sh                     # Environment variable setup
+│   ├── download_url.py                 # Legacy Google Drive URL helpers (fallback)
 │   └── download_dmpo_datasets.py       # Dataset download utility
+├── tests/                              # Regression tests
 ├── util/                               # Schedulers, timers, HuggingFace download, etc.
 ├── requirements.txt
 └── pyproject.toml
@@ -192,7 +194,7 @@ To disable WandB logging, pass `wandb=null` when running scripts.
 
 ### Gym / MuJoCo / Kitchen
 
-Datasets are automatically downloaded from D4RL on first use. The expected directory structure:
+Datasets are automatically downloaded from D4RL on first use, or from HuggingFace when using `hf://` paths in config. The expected directory structure:
 
 ```
 data/
@@ -242,6 +244,11 @@ python script/run.py --config-name=pre_drifting_transformer_img \
 ```
 
 ### Q-Guided Drifting Fine-tuning
+
+Fine-tuning configs use `offline_dataset_path` to specify the offline dataset for mixed-batch training. The launcher resolves this path automatically:
+
+- **Local paths**: Used directly (e.g., `data/gym/hopper-medium-v2/train.npz`).
+- **HuggingFace paths**: Downloaded via `hf://` prefix (e.g., `hf://gym/hopper-medium-v2/train.npz`).
 
 ```bash
 # Gym / Locomotion (Transformer backbone)
