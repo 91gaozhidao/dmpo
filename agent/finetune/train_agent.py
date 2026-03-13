@@ -100,7 +100,7 @@ class TrainAgent:
             env_name,
             env_type=env_type,
             num_envs=env_cfg.n_envs,
-            asynchronous=True,
+            asynchronous=env_cfg.get("asynchronous", True),
             max_episode_steps=env_cfg.max_episode_steps,
             wrappers=env_cfg.get("wrappers", None),
             robomimic_env_cfg_path=robomimic_env_cfg_path,

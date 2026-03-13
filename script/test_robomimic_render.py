@@ -204,7 +204,11 @@ def main() -> int:
             f"last_reward={reward}"
         )
 
-    env.close()
+    close_fn = getattr(env, "close", None)
+    if callable(close_fn):
+        close_fn()
+    elif hasattr(env, "env") and callable(getattr(env.env, "close", None)):
+        env.env.close()
     print("Robomimic render smoke test passed.")
     return 0
 
